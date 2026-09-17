@@ -8,4 +8,10 @@ public class RoomController : Controller
     {
         _context = context; 
     }
+
+    public IActionResult Index()
+    {
+        var rooms = _context.Rooms.ToList();
+        return View(rooms); 
+    }
 }

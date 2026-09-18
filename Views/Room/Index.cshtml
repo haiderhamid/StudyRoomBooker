@@ -1,0 +1,22 @@
+@model List<Room> 
+    <h1>Available Rooms</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Room Number</th>
+                <th>Building</th>
+                <th>Capacity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var room in Model)
+            {
+                <tr>
+                    <td>@room.RoomNumber</td>
+                    <td>@room.Building</td>
+                    <td>@room.Capacity</td>
+                </tr>
+            }
+        </tbody>
+    </table>

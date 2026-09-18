@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 public class RoomController : Controller
@@ -9,9 +10,10 @@ public class RoomController : Controller
         _context = context; 
     }
 
-    public IActionResult Index()
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        var rooms = _context.Rooms.ToList();
+        var rooms = await _context.Rooms.ToListAsync();
         return View(rooms); 
     }
 }

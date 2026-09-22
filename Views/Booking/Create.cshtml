@@ -1,0 +1,32 @@
+@model Booking
+
+<h1>Create Booking</h1>
+<div asp-validation-summary="All"></div>
+<form asp-action="Create" method="post">
+    <div>
+        <label asp-for="RoomId"></label>
+        <input asp-for="RoomId" />
+        <span asp-validation-for="RoomId"></span>
+    </div>
+    <div>
+        <label asp-for="Subject"></label>
+        <input asp-for="Subject" />
+        <span asp-validation-for="Subject"></span>
+    </div>
+    <div>
+        <label asp-for="StartTime"></label>
+        <input asp-for="StartTime" />
+        <span asp-validation-for="StartTime"></span>
+    </div>
+    <div>
+        <label asp-for="EndTime"></label>
+        <input asp-for="EndTime" />
+        <span asp-validation-for="EndTime"></span>
+    </div>
+    <div>
+        <label asp-for="BookedBy"></label>
+        <input asp-for="BookedBy" />
+        <span asp-validation-for="BookedBy"></span>
+    </div>
+    <button type="submit">Create</button>
+</form>

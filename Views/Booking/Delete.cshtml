@@ -1,0 +1,27 @@
+@model Booking
+
+<h1>Delete Booking</h1>
+
+<p>Are you sure you want to delete this booking?</p>
+
+<dl>
+    <dt>Room</dt>
+    <dd>@Model.RoomId</dd>
+
+    <dt>Subject</dt>
+    <dd>@Model.Subject</dd>
+
+    <dt>Start Time</dt>
+    <dd>@Model.StartTime</dd>
+
+    <dt>End Time</dt>
+    <dd>@Model.EndTime</dd>
+
+    <dt>Booked By</dt>
+    <dd>@Model.BookedBy</dd>
+</dl>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit">Delete</button>
+</form>

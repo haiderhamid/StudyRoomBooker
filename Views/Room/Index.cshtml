@@ -1,22 +1,18 @@
-@model List<Room> 
-    <h1>Available Rooms</h1>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Room Number</th>
-                <th>Building</th>
-                <th>Capacity</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var room in Model)
-            {
-                <tr>
-                    <td>@room.RoomNumber</td>
-                    <td>@room.Building</td>
-                    <td>@room.Capacity</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+@model List<Room>
+
+<h1 class="mb-4">Available Rooms</h1>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var room in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Room @room.RoomNumber</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Building @room.Building</h6>
+                    <p class="card-text">Capacity: <span class="badge bg-primary">@room.Capacity people</span></p>
+                </div>
+            </div>
+        </div>
+    }
+</div>

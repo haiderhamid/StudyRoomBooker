@@ -1,34 +1,37 @@
 @model List<Booking>
 
-<h1>All Bookings</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>All Bookings</h1>
+    <a asp-action="Create" class="btn btn-primary">+ New Booking</a>
+</div>
 
-<a asp-action="Create">Create New Booking</a>
-
-<table>
-    <thead>
-        <tr>
-            <th>Room</th>
-            <th>Subject</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Booked By</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var booking in Model)
-        {
+<div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
             <tr>
-                <td>@booking.RoomId</td>
-                <td>@booking.Subject</td>
-                <td>@booking.StartTime</td>
-                <td>@booking.EndTime</td>
-                <td>@booking.BookedBy</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@booking.Id">Edit</a>
-                    <a asp-action="Delete" asp-route-id="@booking.Id">Delete</a>
-                </td>
+                <th>Room</th>
+                <th>Subject</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Booked By</th>
+                <th class="text-end">Actions</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var booking in Model)
+            {
+                <tr>
+                    <td>@booking.RoomId</td>
+                    <td>@booking.Subject</td>
+                    <td>@booking.StartTime.ToString("g")</td>
+                    <td>@booking.EndTime.ToString("g")</td>
+                    <td>@booking.BookedBy</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

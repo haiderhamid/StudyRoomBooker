@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 public class BookingController : Controller
 {
     private readonly AppDbContext _context;
     private readonly ILogger<BookingController> _logger;
 
+    // AppDbContext gives us access to the database, ILogger lets us write to Serilog.
+    // Both are provided automatically by ASP.NET Core dependency injection.
     public BookingController(AppDbContext context, ILogger<BookingController> logger)
     {
         _context = context;
@@ -27,17 +30,48 @@ public class BookingController : Controller
         }
     }
 
-    [HttpGet]
-    public IActionResult Create()
+    // Builds the list of rooms shown in the RoomId dropdown on the Create/Edit forms.
+    // Value = the RoomId that gets submitted, Text = what the user actually sees.
+    private async Task<List<SelectListItem>> GetRoomSelectListAsync()
     {
-        return View();
+        var rooms = await _context.Rooms.ToListAsync();
+        return rooms.Select(r => new SelectListItem
+        {
+            Value = r.Id.ToString(),
+            Text = $"{r.RoomNumber} ({r.Building})"
+        }).ToList();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Create()
+    {
+        var viewModel = new BookingViewModel
+        {
+            Booking = new Booking
+            {
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(1)
+            },
+            RoomSelectList = await GetRoomSelectListAsync()
+        };
+        return View(viewModel);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Booking booking)
+    public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
         try
         {
+            var booking = viewModel.Booking;
+
+            // Basic sanity check: the booking must end after it starts.
+            if (booking.EndTime <= booking.StartTime)
+            {
+                ModelState.AddModelError("", "End time must be after start time.");
+            }
+
+            // Business rule: the same room cannot be booked twice for overlapping times.
+            // Two time ranges overlap if each one starts before the other one ends.
             bool overlapping = await _context.Bookings.AnyAsync(b =>
             b.RoomId == booking.RoomId &&
             booking.StartTime < b.EndTime &&
@@ -55,15 +89,19 @@ public class BookingController : Controller
                 _logger.LogInformation("[BookingController] Booking created successfully for RoomId {RoomId}.", booking.RoomId);
                 return RedirectToAction("Index");
             }
-            return View(booking);
+
+            // Validation failed: redisplay the form. The dropdown list is not part of the
+            // posted form data, so it must be rebuilt before returning the view.
+            viewModel.RoomSelectList = await GetRoomSelectListAsync();
+            return View(viewModel);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[BookingController] Error creating booking.");
             ModelState.AddModelError("", "An unexpected error occurred while creating the booking. Please try again.");
-            return View(booking);
+            viewModel.RoomSelectList = await GetRoomSelectListAsync();
+            return View(viewModel);
         }
-
     }
 
     [HttpGet]
@@ -74,9 +112,16 @@ public class BookingController : Controller
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
             {
+                _logger.LogWarning("[BookingController] Booking with Id {Id} not found for editing.", id);
                 return NotFound();
             }
-            return View(booking);
+
+            var viewModel = new BookingViewModel
+            {
+                Booking = booking,
+                RoomSelectList = await GetRoomSelectListAsync()
+            };
+            return View(viewModel);
         }
         catch (Exception ex)
         {
@@ -86,14 +131,24 @@ public class BookingController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Edit(int id, Booking booking)
+    public async Task<IActionResult> Edit(int id, BookingViewModel viewModel)
     {
+        var booking = viewModel.Booking;
+
         if (id != booking.Id)
         {
             return NotFound();
         }
+
         try
         {
+            if (booking.EndTime <= booking.StartTime)
+            {
+                ModelState.AddModelError("", "End time must be after start time.");
+            }
+
+            // Same overlap check as Create, but we exclude the booking's own Id,
+            // otherwise it would always "overlap" with itself.
             bool overlapping = await _context.Bookings.AnyAsync(b =>
             b.Id != booking.Id &&
             b.RoomId == booking.RoomId &&
@@ -112,13 +167,16 @@ public class BookingController : Controller
                 _logger.LogInformation("[BookingController] Booking with Id {Id} updated successfully.", id);
                 return RedirectToAction("Index");
             }
-            return View(booking);
+
+            viewModel.RoomSelectList = await GetRoomSelectListAsync();
+            return View(viewModel);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[BookingController] Error updating booking with Id {Id}.", id);
             ModelState.AddModelError("", "An unexpected error occurred while updating the booking. Please try again.");
-            return View(booking);
+            viewModel.RoomSelectList = await GetRoomSelectListAsync();
+            return View(viewModel);
         }
     }
 
@@ -130,6 +188,7 @@ public class BookingController : Controller
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
             {
+                _logger.LogWarning("[BookingController] Booking with Id {Id} not found for deletion.", id);
                 return NotFound();
             }
             return View(booking);

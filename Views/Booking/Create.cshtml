@@ -1,32 +1,41 @@
-@model Booking
+@model BookingViewModel
 
-<h1>Create Booking</h1>
-<div asp-validation-summary="All"></div>
-<form asp-action="Create" method="post">
-    <div>
-        <label asp-for="RoomId"></label>
-        <input asp-for="RoomId" />
-        <span asp-validation-for="RoomId"></span>
+<h1 class="mb-4">Create Booking</h1>
+
+<div class="card shadow-sm" style="max-width: 500px;">
+    <div class="card-body">
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <form asp-action="Create" method="post">
+            <div class="mb-3">
+                <label asp-for="Booking.RoomId" class="form-label">Room</label>
+                <select asp-for="Booking.RoomId" asp-items="Model.RoomSelectList" class="form-select">
+                    <option value="">-- Select a room --</option>
+                </select>
+                <span asp-validation-for="Booking.RoomId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Booking.Subject" class="form-label"></label>
+                <input asp-for="Booking.Subject" class="form-control" />
+                <span asp-validation-for="Booking.Subject" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Booking.StartTime" class="form-label"></label>
+                <input asp-for="Booking.StartTime" class="form-control" />
+                <span asp-validation-for="Booking.StartTime" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Booking.EndTime" class="form-label"></label>
+                <input asp-for="Booking.EndTime" class="form-control" />
+                <span asp-validation-for="Booking.EndTime" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Booking.BookedBy" class="form-label"></label>
+                <input asp-for="Booking.BookedBy" class="form-control" />
+                <span asp-validation-for="Booking.BookedBy" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
     </div>
-    <div>
-        <label asp-for="Subject"></label>
-        <input asp-for="Subject" />
-        <span asp-validation-for="Subject"></span>
-    </div>
-    <div>
-        <label asp-for="StartTime"></label>
-        <input asp-for="StartTime" />
-        <span asp-validation-for="StartTime"></span>
-    </div>
-    <div>
-        <label asp-for="EndTime"></label>
-        <input asp-for="EndTime" />
-        <span asp-validation-for="EndTime"></span>
-    </div>
-    <div>
-        <label asp-for="BookedBy"></label>
-        <input asp-for="BookedBy" />
-        <span asp-validation-for="BookedBy"></span>
-    </div>
-    <button type="submit">Create</button>
-</form>
+</div>

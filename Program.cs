@@ -18,6 +18,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Creates the database from the migrations if it does not exist yet
+    context.Database.Migrate();
+
     if (!context.Rooms.Any())
     {
         context.Rooms.AddRange(
@@ -33,7 +37,6 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

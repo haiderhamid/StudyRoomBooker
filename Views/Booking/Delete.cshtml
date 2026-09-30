@@ -7,8 +7,8 @@
         <p class="text-danger">Are you sure you want to delete this booking?</p>
 
         <dl class="row">
-            <dt class="col-sm-4">Room Id</dt>
-            <dd class="col-sm-8">@Model.RoomId</dd>
+            <dt class="col-sm-4">Room</dt>
+            <dd class="col-sm-8">@Model.Room?.RoomNumber (@Model.Room?.Building)</dd>
 
             <dt class="col-sm-4">Subject</dt>
             <dd class="col-sm-8">@Model.Subject</dd>

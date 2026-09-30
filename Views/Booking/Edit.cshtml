@@ -20,12 +20,12 @@
             </div>
             <div class="mb-3">
                 <label asp-for="Booking.StartTime" class="form-label"></label>
-                <input asp-for="Booking.StartTime" class="form-control" />
+                <input asp-for="Booking.StartTime" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" />
                 <span asp-validation-for="Booking.StartTime" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label asp-for="Booking.EndTime" class="form-label"></label>
-                <input asp-for="Booking.EndTime" class="form-control" />
+                <input asp-for="Booking.EndTime" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" />
                 <span asp-validation-for="Booking.EndTime" class="text-danger"></span>
             </div>
             <div class="mb-3">

@@ -20,4 +20,6 @@ public class Booking
     [Required(ErrorMessage = "Please enter who booked the room.")]
     [StringLength(100)]
     public string BookedBy { get; set; } = string.Empty;
+
+    public virtual Room? Room { get; set; }
 }

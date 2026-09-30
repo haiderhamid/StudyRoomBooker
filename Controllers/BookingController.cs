@@ -7,8 +7,6 @@ public class BookingController : Controller
     private readonly AppDbContext _context;
     private readonly ILogger<BookingController> _logger;
 
-    // AppDbContext gives us access to the database, ILogger lets us write to Serilog.
-    // Both are provided automatically by ASP.NET Core dependency injection.
     public BookingController(AppDbContext context, ILogger<BookingController> logger)
     {
         _context = context;
@@ -20,7 +18,7 @@ public class BookingController : Controller
     {
         try
         {
-            var bookings = await _context.Bookings.ToListAsync();
+            var bookings = await _context.Bookings.Include(b => b.Room).ToListAsync();
             return View(bookings);
         }
         catch (Exception ex)
@@ -30,8 +28,7 @@ public class BookingController : Controller
         }
     }
 
-    // Builds the list of rooms shown in the RoomId dropdown on the Create/Edit forms.
-    // Value = the RoomId that gets submitted, Text = what the user actually sees.
+    // Makes the list of rooms for the dropdown in Create and Edit. 
     private async Task<List<SelectListItem>> GetRoomSelectListAsync()
     {
         var rooms = await _context.Rooms.ToListAsync();
@@ -64,14 +61,13 @@ public class BookingController : Controller
         {
             var booking = viewModel.Booking;
 
-            // Basic sanity check: the booking must end after it starts.
+            // End time has to be after start time
             if (booking.EndTime <= booking.StartTime)
             {
                 ModelState.AddModelError("", "End time must be after start time.");
             }
 
-            // Business rule: the same room cannot be booked twice for overlapping times.
-            // Two time ranges overlap if each one starts before the other one ends.
+            // Check if the room is already booked in this period
             bool overlapping = await _context.Bookings.AnyAsync(b =>
             b.RoomId == booking.RoomId &&
             booking.StartTime < b.EndTime &&
@@ -90,8 +86,7 @@ public class BookingController : Controller
                 return RedirectToAction("Index");
             }
 
-            // Validation failed: redisplay the form. The dropdown list is not part of the
-            // posted form data, so it must be rebuilt before returning the view.
+            // The room list is not sent with the form so we load it again
             viewModel.RoomSelectList = await GetRoomSelectListAsync();
             return View(viewModel);
         }
@@ -147,8 +142,7 @@ public class BookingController : Controller
                 ModelState.AddModelError("", "End time must be after start time.");
             }
 
-            // Same overlap check as Create, but we exclude the booking's own Id,
-            // otherwise it would always "overlap" with itself.
+            // Same check as in Create, but skip the booking we are editing.
             bool overlapping = await _context.Bookings.AnyAsync(b =>
             b.Id != booking.Id &&
             b.RoomId == booking.RoomId &&
@@ -185,7 +179,7 @@ public class BookingController : Controller
     {
         try
         {
-            var booking = await _context.Bookings.FindAsync(id);
+            var booking = await _context.Bookings.Include(b => b.Room).FirstOrDefaultAsync(b => b.Id == id);
             if (booking == null)
             {
                 _logger.LogWarning("[BookingController] Booking with Id {Id} not found for deletion.", id);

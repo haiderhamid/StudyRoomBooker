@@ -15,7 +15,9 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
-            return await _context.Bookings.Include(b => b.Room).ToListAsync();
+            return await _context.Bookings
+                .Include(b => b.Room!).ThenInclude(r => r.Building)
+                .ToListAsync();
         }
         catch (Exception ex)
         {
@@ -28,7 +30,9 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
-            return await _context.Bookings.Include(b => b.Room).FirstOrDefaultAsync(b => b.Id == id);
+            return await _context.Bookings
+                .Include(b => b.Room!).ThenInclude(r => r.Building)
+                .FirstOrDefaultAsync(b => b.Id == id);
         }
         catch (Exception ex)
         {
@@ -101,6 +105,19 @@ public class BookingRepository : IBookingRepository
         catch (Exception ex)
         {
             _logger.LogError(ex, "[BookingRepository] IsRoomBooked() failed for RoomId {RoomId}.", roomId);
+            return true;
+        }
+    }
+
+    public async Task<bool> HasBookingsForRoom(int roomId)
+    {
+        try
+        {
+            return await _context.Bookings.AnyAsync(b => b.RoomId == roomId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[BookingRepository] HasBookingsForRoom() failed for RoomId {RoomId}.", roomId);
             return true;
         }
     }

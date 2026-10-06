@@ -1,0 +1,35 @@
+@model Building
+
+<h1 class="mb-4">Delete Building</h1>
+
+<div class="card shadow-sm" style="max-width: 500px;">
+    <div class="card-body">
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <dl class="row">
+            <dt class="col-sm-4">Name</dt>
+            <dd class="col-sm-8">@Model.Name</dd>
+
+            <dt class="col-sm-4">Address</dt>
+            <dd class="col-sm-8">@Model.Address</dd>
+
+            <dt class="col-sm-4">Rooms</dt>
+            <dd class="col-sm-8">@(Model.Rooms?.Count ?? 0)</dd>
+        </dl>
+
+        @if (Model.Rooms != null && Model.Rooms.Any())
+        {
+            <div class="alert alert-warning">This building has rooms and cannot be deleted.</div>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        }
+        else
+        {
+            <p class="text-danger">Are you sure you want to delete this building?</p>
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger">Delete</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </form>
+        }
+    </div>
+</div>

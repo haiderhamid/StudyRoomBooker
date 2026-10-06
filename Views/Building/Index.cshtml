@@ -1,0 +1,34 @@
+@model List<Building>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Buildings</h1>
+    <a asp-action="Create" class="btn btn-primary">+ New Building</a>
+</div>
+
+<div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Rooms</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var building in Model)
+            {
+                var roomCount = building.Rooms?.Count ?? 0;
+                <tr>
+                    <td>@building.Name</td>
+                    <td>@building.Address</td>
+                    <td>@(roomCount == 1 ? "1 room" : $"{roomCount} rooms")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@building.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@building.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -9,4 +9,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Booking> Bookings { get; set; }
+    public DbSet<Building> Buildings { get; set; }
+    public DbSet<Facility> Facilities { get; set; }
+    public DbSet<RoomFacility> RoomFacilities { get; set; }
 }

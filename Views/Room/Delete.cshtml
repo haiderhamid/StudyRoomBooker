@@ -1,0 +1,33 @@
+@model Room
+
+<h1 class="mb-4">Delete Room</h1>
+
+<div class="card shadow-sm" style="max-width: 500px;">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-4">Room</dt>
+            <dd class="col-sm-8">@Model.RoomNumber</dd>
+
+            <dt class="col-sm-4">Building</dt>
+            <dd class="col-sm-8">@Model.Building?.Name</dd>
+
+            <dt class="col-sm-4">Capacity</dt>
+            <dd class="col-sm-8">@Model.Capacity</dd>
+        </dl>
+
+        @if (ViewBag.HasBookings == true)
+        {
+            <div class="alert alert-warning">This room has bookings and cannot be deleted.</div>
+            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        }
+        else
+        {
+            <p class="text-danger">Are you sure you want to delete this room?</p>
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger">Delete</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </form>
+        }
+    </div>
+</div>

@@ -1,17 +1,16 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 public class BookingController : Controller
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly AppDbContext _context;
+    private readonly IRoomRepository _roomRepository;
     private readonly ILogger<BookingController> _logger;
 
-    public BookingController(IBookingRepository bookingRepository, AppDbContext context, ILogger<BookingController> logger)
+    public BookingController(IBookingRepository bookingRepository, IRoomRepository roomRepository, ILogger<BookingController> logger)
     {
         _bookingRepository = bookingRepository;
-        _context = context;
+        _roomRepository = roomRepository;
         _logger = logger;
     }
 
@@ -30,11 +29,11 @@ public class BookingController : Controller
     // Makes the list of rooms for the dropdown in Create and Edit.
     private async Task<List<SelectListItem>> GetRoomSelectListAsync()
     {
-        var rooms = await _context.Rooms.ToListAsync();
+        var rooms = await _roomRepository.GetAll() ?? new List<Room>();
         return rooms.Select(r => new SelectListItem
         {
             Value = r.Id.ToString(),
-            Text = $"{r.RoomNumber} ({r.Building})"
+            Text = $"{r.RoomNumber} ({r.Building?.Name})"
         }).ToList();
     }
 

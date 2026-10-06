@@ -21,7 +21,7 @@
             @foreach (var booking in Model)
             {
                 <tr>
-                    <td>@booking.Room?.RoomNumber (@booking.Room?.Building)</td>
+                    <td>@booking.Room?.RoomNumber (@booking.Room?.Building?.Name)</td>
                     <td>@booking.Subject</td>
                     <td>@booking.StartTime.ToString("g")</td>
                     <td>@booking.EndTime.ToString("g")</td>

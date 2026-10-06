@@ -1,0 +1,42 @@
+@model RoomViewModel
+
+<h1 class="mb-4">Create Room</h1>
+
+<div class="card shadow-sm" style="max-width: 500px;">
+    <div class="card-body">
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <form asp-action="Create" method="post">
+            <div class="mb-3">
+                <label asp-for="Room.RoomNumber" class="form-label">Room number</label>
+                <input asp-for="Room.RoomNumber" class="form-control" />
+                <span asp-validation-for="Room.RoomNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Room.BuildingId" class="form-label">Building</label>
+                <select asp-for="Room.BuildingId" asp-items="Model.BuildingSelectList" class="form-select">
+                    <option value="">-- Select a building --</option>
+                </select>
+                <span asp-validation-for="Room.BuildingId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Room.Capacity" class="form-label"></label>
+                <input asp-for="Room.Capacity" class="form-control" />
+                <span asp-validation-for="Room.Capacity" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Facilities</label>
+                @foreach (var facility in Model.AllFacilities)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SelectedFacilityIds" value="@facility.Id"
+                               id="facility-@facility.Id" checked="@Model.SelectedFacilityIds.Contains(facility.Id)" />
+                        <label class="form-check-label" for="facility-@facility.Id">@facility.Name</label>
+                    </div>
+                }
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

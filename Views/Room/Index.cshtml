@@ -1,6 +1,9 @@
 @model List<Room>
 
-<h1 class="mb-4">Available Rooms</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Rooms</h1>
+    <a asp-action="Create" class="btn btn-primary">+ New Room</a>
+</div>
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
     @foreach (var room in Model)
@@ -9,8 +12,21 @@
             <div class="card h-100 shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Room @room.RoomNumber</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">Building @room.Building</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">@room.Building?.Name</h6>
                     <p class="card-text">Capacity: <span class="badge bg-primary">@room.Capacity people</span></p>
+                    @if (room.RoomFacilities != null && room.RoomFacilities.Any())
+                    {
+                        <p class="card-text">
+                            @foreach (var rf in room.RoomFacilities)
+                            {
+                                <span class="badge bg-secondary me-1">@rf.Facility?.Name</span>
+                            }
+                        </p>
+                    }
+                </div>
+                <div class="card-footer bg-white border-0 text-end">
+                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-outline-danger">Delete</a>
                 </div>
             </div>
         </div>

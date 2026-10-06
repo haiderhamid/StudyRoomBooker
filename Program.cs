@@ -13,6 +13,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
+builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
 
 var app = builder.Build();
 
@@ -23,13 +26,28 @@ using (var scope = app.Services.CreateScope())
     // Creates the database from the migrations if it does not exist yet
     context.Database.Migrate();
 
-    if (!context.Rooms.Any())
+    if (!context.Buildings.Any())
     {
-        context.Rooms.AddRange(
-            new Room { RoomNumber = "101", Building = "A", Capacity = 4 },
-            new Room { RoomNumber = "102", Building = "A", Capacity = 6 },
-            new Room { RoomNumber = "201", Building = "B", Capacity = 2 }
+        var p35 = new Building { Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" };
+        var p46 = new Building { Name = "Pilestredet 46", Address = "Pilestredet 46, Oslo" };
+
+        var projector = new Facility { Name = "Projector" };
+        var whiteboard = new Facility { Name = "Whiteboard" };
+        var screen = new Facility { Name = "Screen" };
+
+        var room101 = new Room { RoomNumber = "101", Capacity = 4, Building = p35 };
+        var room102 = new Room { RoomNumber = "102", Capacity = 6, Building = p35 };
+        var room201 = new Room { RoomNumber = "201", Capacity = 2, Building = p46 };
+
+        context.Rooms.AddRange(room101, room102, room201);
+
+        context.RoomFacilities.AddRange(
+            new RoomFacility { Room = room101, Facility = whiteboard },
+            new RoomFacility { Room = room102, Facility = projector },
+            new RoomFacility { Room = room102, Facility = whiteboard },
+            new RoomFacility { Room = room201, Facility = screen }
         );
+
         context.SaveChanges();
     }
 }

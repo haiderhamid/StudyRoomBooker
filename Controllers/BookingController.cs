@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 public class BookingController : Controller
 {
+    private readonly IBookingRepository _bookingRepository;
     private readonly AppDbContext _context;
     private readonly ILogger<BookingController> _logger;
 
-    public BookingController(AppDbContext context, ILogger<BookingController> logger)
+    public BookingController(IBookingRepository bookingRepository, AppDbContext context, ILogger<BookingController> logger)
     {
+        _bookingRepository = bookingRepository;
         _context = context;
         _logger = logger;
     }
@@ -16,19 +18,16 @@ public class BookingController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        try
+        var bookings = await _bookingRepository.GetAll();
+        if (bookings == null)
         {
-            var bookings = await _context.Bookings.Include(b => b.Room).ToListAsync();
-            return View(bookings);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[BookingController] Error retrieving bookings from the database.");
+            _logger.LogError("[BookingController] Booking list not found while executing GetAll().");
             return View(new List<Booking>());
         }
+        return View(bookings.ToList());
     }
 
-    // Makes the list of rooms for the dropdown in Create and Edit. 
+    // Makes the list of rooms for the dropdown in Create and Edit.
     private async Task<List<SelectListItem>> GetRoomSelectListAsync()
     {
         var rooms = await _context.Rooms.ToListAsync();
@@ -57,72 +56,52 @@ public class BookingController : Controller
     [HttpPost]
     public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
-        try
+        var booking = viewModel.Booking;
+
+        // End time has to be after start time
+        if (booking.EndTime <= booking.StartTime)
         {
-            var booking = viewModel.Booking;
+            ModelState.AddModelError("", "End time must be after start time.");
+        }
 
-            // End time has to be after start time
-            if (booking.EndTime <= booking.StartTime)
+        // Check if the room is already booked in this period (0 = no booking to skip)
+        if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
+        {
+            ModelState.AddModelError("", "This room is already booked in that time period.");
+        }
+
+        if (ModelState.IsValid)
+        {
+            bool created = await _bookingRepository.Create(booking);
+            if (created)
             {
-                ModelState.AddModelError("", "End time must be after start time.");
-            }
-
-            // Check if the room is already booked in this period
-            bool overlapping = await _context.Bookings.AnyAsync(b =>
-            b.RoomId == booking.RoomId &&
-            booking.StartTime < b.EndTime &&
-            booking.EndTime > b.StartTime);
-
-            if (overlapping)
-            {
-                ModelState.AddModelError("", "This room is already booked in that time period.");
-            }
-
-            if (ModelState.IsValid)
-            {
-                _context.Bookings.Add(booking);
-                await _context.SaveChangesAsync();
                 _logger.LogInformation("[BookingController] Booking created successfully for RoomId {RoomId}.", booking.RoomId);
                 return RedirectToAction("Index");
             }
-
-            // The room list is not sent with the form so we load it again
-            viewModel.RoomSelectList = await GetRoomSelectListAsync();
-            return View(viewModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[BookingController] Error creating booking.");
             ModelState.AddModelError("", "An unexpected error occurred while creating the booking. Please try again.");
-            viewModel.RoomSelectList = await GetRoomSelectListAsync();
-            return View(viewModel);
         }
+
+        // The room list is not sent with the form so we load it again
+        viewModel.RoomSelectList = await GetRoomSelectListAsync();
+        return View(viewModel);
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        try
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
         {
-            var booking = await _context.Bookings.FindAsync(id);
-            if (booking == null)
-            {
-                _logger.LogWarning("[BookingController] Booking with Id {Id} not found for editing.", id);
-                return NotFound();
-            }
-
-            var viewModel = new BookingViewModel
-            {
-                Booking = booking,
-                RoomSelectList = await GetRoomSelectListAsync()
-            };
-            return View(viewModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[BookingController] Error retrieving booking with Id {Id} for editing.", id);
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found for editing.", id);
             return NotFound();
         }
+
+        var viewModel = new BookingViewModel
+        {
+            Booking = booking,
+            RoomSelectList = await GetRoomSelectListAsync()
+        };
+        return View(viewModel);
     }
 
     [HttpPost]
@@ -135,83 +114,56 @@ public class BookingController : Controller
             return NotFound();
         }
 
-        try
+        if (booking.EndTime <= booking.StartTime)
         {
-            if (booking.EndTime <= booking.StartTime)
-            {
-                ModelState.AddModelError("", "End time must be after start time.");
-            }
+            ModelState.AddModelError("", "End time must be after start time.");
+        }
 
-            // Same check as in Create, but skip the booking we are editing.
-            bool overlapping = await _context.Bookings.AnyAsync(b =>
-            b.Id != booking.Id &&
-            b.RoomId == booking.RoomId &&
-            booking.StartTime < b.EndTime &&
-            booking.EndTime > b.StartTime);
+        // Same check as in Create, but skip the booking we are editing.
+        if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
+        {
+            ModelState.AddModelError("", "This room is already booked in that time period.");
+        }
 
-            if (overlapping)
+        if (ModelState.IsValid)
+        {
+            bool updated = await _bookingRepository.Update(booking);
+            if (updated)
             {
-                ModelState.AddModelError("", "This room is already booked in that time period.");
-            }
-
-            if (ModelState.IsValid)
-            {
-                _context.Bookings.Update(booking);
-                await _context.SaveChangesAsync();
                 _logger.LogInformation("[BookingController] Booking with Id {Id} updated successfully.", id);
                 return RedirectToAction("Index");
             }
-
-            viewModel.RoomSelectList = await GetRoomSelectListAsync();
-            return View(viewModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[BookingController] Error updating booking with Id {Id}.", id);
             ModelState.AddModelError("", "An unexpected error occurred while updating the booking. Please try again.");
-            viewModel.RoomSelectList = await GetRoomSelectListAsync();
-            return View(viewModel);
         }
+
+        viewModel.RoomSelectList = await GetRoomSelectListAsync();
+        return View(viewModel);
     }
 
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        try
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
         {
-            var booking = await _context.Bookings.Include(b => b.Room).FirstOrDefaultAsync(b => b.Id == id);
-            if (booking == null)
-            {
-                _logger.LogWarning("[BookingController] Booking with Id {Id} not found for deletion.", id);
-                return NotFound();
-            }
-            return View(booking);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[BookingController] Error retrieving booking with Id {Id} for deletion.", id);
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found for deletion.", id);
             return NotFound();
         }
+        return View(booking);
     }
 
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        try
+        bool deleted = await _bookingRepository.Delete(id);
+        if (deleted)
         {
-            var booking = await _context.Bookings.FindAsync(id);
-            if (booking != null)
-            {
-                _context.Bookings.Remove(booking);
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("[BookingController] Booking with Id {Id} deleted successfully.", id);
-            }
-            return RedirectToAction("Index");
+            _logger.LogInformation("[BookingController] Booking with Id {Id} deleted successfully.", id);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "[BookingController] Error deleting booking with Id {Id}.", id);
-            return RedirectToAction("Index");
+            _logger.LogWarning("[BookingController] Booking with Id {Id} could not be deleted.", id);
         }
+        return RedirectToAction("Index");
     }
 }

@@ -1,34 +1,66 @@
-@model List<Room>
+@model RoomSearchViewModel
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Rooms</h1>
     <a asp-action="Create" class="btn btn-primary">+ New Room</a>
 </div>
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    @foreach (var room in Model)
-    {
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Room @room.RoomNumber</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">@room.Building?.Name</h6>
-                    <p class="card-text">Capacity: <span class="badge bg-primary">@room.Capacity people</span></p>
-                    @if (room.RoomFacilities != null && room.RoomFacilities.Any())
-                    {
-                        <p class="card-text">
-                            @foreach (var rf in room.RoomFacilities)
-                            {
-                                <span class="badge bg-secondary me-1">@rf.Facility?.Name</span>
-                            }
-                        </p>
-                    }
-                </div>
-                <div class="card-footer bg-white border-0 text-end">
-                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+<form asp-action="Index" method="get" class="card shadow-sm mb-4">
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-3">
+            <label asp-for="BuildingId" class="form-label">Building</label>
+            <select asp-for="BuildingId" asp-items="Model.BuildingSelectList" class="form-select">
+                <option value="">All buildings</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="MinCapacity" class="form-label">Minimum seats</label>
+            <input asp-for="MinCapacity" type="number" min="1" class="form-control" placeholder="Any" />
+        </div>
+        <div class="col-md-3">
+            <label asp-for="FacilityId" class="form-label">Equipment</label>
+            <select asp-for="FacilityId" asp-items="Model.FacilitySelectList" class="form-select">
+                <option value="">Any equipment</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Rooms.Any())
+{
+    <div class="alert alert-info">No rooms match your search.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var room in Model.Rooms)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Room @room.RoomNumber</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">@room.Building?.Name</h6>
+                        <p class="card-text">Capacity: <span class="badge bg-primary">@room.Capacity people</span></p>
+                        @if (room.RoomFacilities != null && room.RoomFacilities.Any())
+                        {
+                            <p class="card-text">
+                                @foreach (var rf in room.RoomFacilities)
+                                {
+                                    <span class="badge bg-secondary me-1">@rf.Facility?.Name</span>
+                                }
+                            </p>
+                        }
+                    </div>
+                    <div class="card-footer bg-white border-0 text-end">
+                        <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </div>
                 </div>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
+}

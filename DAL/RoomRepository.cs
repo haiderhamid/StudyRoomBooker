@@ -98,4 +98,37 @@ public class RoomRepository : IRoomRepository
             return false;
         }
     }
+
+    public async Task<IEnumerable<Room>?> Search(int? buildingId, int? minCapacity, int? facilityId)
+    {
+        try
+        {
+            IQueryable<Room> query = _context.Rooms
+                .Include(r => r.Building)
+                .Include(r => r.RoomFacilities!)
+                    .ThenInclude(rf => rf.Facility);
+
+            if (buildingId.HasValue)
+            {
+                query = query.Where(r => r.BuildingId == buildingId.Value);
+            }
+
+            if (minCapacity.HasValue)
+            {
+                query = query.Where(r => r.Capacity >= minCapacity.Value);
+            }
+
+            if (facilityId.HasValue)
+            {
+                query = query.Where(r => r.RoomFacilities!.Any(rf => rf.FacilityId == facilityId.Value));
+            }
+
+            return await query.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[RoomRepository] Search() failed.");
+            return null;
+        }
+    }
 }

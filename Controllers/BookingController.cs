@@ -37,17 +37,38 @@ public class BookingController : Controller
         }).ToList();
     }
 
+    private List<SelectListItem> GetTimeSelectList()
+    {
+        var times = new List<SelectListItem>();
+        for (var time = new TimeSpan(7, 0, 0); time <= new TimeSpan(22, 0, 0); time = time.Add(TimeSpan.FromMinutes(15)))
+        {
+            times.Add(new SelectListItem
+            {
+                Value = time.ToString(),
+                Text = time.ToString(@"hh\:mm")
+            });
+        }
+        return times;
+    }
+
+    private bool IsQuarterHour(DateTime time)
+    {
+        return time.Minute % 15 == 0 && time.Second == 0;
+    }
+
     [HttpGet]
     public async Task<IActionResult> Create()
     {
+        var now = DateTime.Now;
+        var start = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddMinutes((now.Minute / 15 + 1) * 15);
+
         var viewModel = new BookingViewModel
         {
-            Booking = new Booking
-            {
-                StartTime = DateTime.Now,
-                EndTime = DateTime.Now.AddHours(1)
-            },
-            RoomSelectList = await GetRoomSelectListAsync()
+            Date = start.Date,
+            FromTime = start.TimeOfDay,
+            ToTime = start.AddHours(1).TimeOfDay,
+            RoomSelectList = await GetRoomSelectListAsync(),
+            TimeSelectList = GetTimeSelectList()
         };
         return View(viewModel);
     }
@@ -56,11 +77,18 @@ public class BookingController : Controller
     public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
         var booking = viewModel.Booking;
+        booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
+        booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
 
         // End time has to be after start time
         if (booking.EndTime <= booking.StartTime)
         {
             ModelState.AddModelError("", "End time must be after start time.");
+        }
+
+        if (!IsQuarterHour(booking.StartTime) || !IsQuarterHour(booking.EndTime))
+        {
+            ModelState.AddModelError("", "Bookings must start and end at :00, :15, :30 or :45.");
         }
 
         // Check if the room is already booked in this period (0 = no booking to skip)
@@ -82,6 +110,7 @@ public class BookingController : Controller
 
         // The room list is not sent with the form so we load it again
         viewModel.RoomSelectList = await GetRoomSelectListAsync();
+        viewModel.TimeSelectList = GetTimeSelectList();
         return View(viewModel);
     }
 
@@ -98,7 +127,11 @@ public class BookingController : Controller
         var viewModel = new BookingViewModel
         {
             Booking = booking,
-            RoomSelectList = await GetRoomSelectListAsync()
+            Date = booking.StartTime.Date,
+            FromTime = booking.StartTime.TimeOfDay,
+            ToTime = booking.EndTime.TimeOfDay,
+            RoomSelectList = await GetRoomSelectListAsync(),
+            TimeSelectList = GetTimeSelectList()
         };
         return View(viewModel);
     }
@@ -113,9 +146,17 @@ public class BookingController : Controller
             return NotFound();
         }
 
+        booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
+        booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
+
         if (booking.EndTime <= booking.StartTime)
         {
             ModelState.AddModelError("", "End time must be after start time.");
+        }
+
+        if (!IsQuarterHour(booking.StartTime) || !IsQuarterHour(booking.EndTime))
+        {
+            ModelState.AddModelError("", "Bookings must start and end at :00, :15, :30 or :45.");
         }
 
         // Same check as in Create, but skip the booking we are editing.
@@ -136,6 +177,7 @@ public class BookingController : Controller
         }
 
         viewModel.RoomSelectList = await GetRoomSelectListAsync();
+        viewModel.TimeSelectList = GetTimeSelectList();
         return View(viewModel);
     }
 

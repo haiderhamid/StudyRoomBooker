@@ -20,15 +20,36 @@ public class RoomController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int? buildingId, int? minCapacity, int? facilityId)
     {
-        var rooms = await _roomRepository.GetAll();
+        var rooms = await _roomRepository.Search(buildingId, minCapacity, facilityId);
         if (rooms == null)
         {
-            _logger.LogError("[RoomController] Room list not found while executing GetAll().");
-            return View(new List<Room>());
+            _logger.LogError("[RoomController] Room list not found while executing Search().");
+            rooms = new List<Room>();
         }
-        return View(rooms.ToList());
+
+        var buildings = await _buildingRepository.GetAll() ?? new List<Building>();
+        var facilities = await _facilityRepository.GetAll() ?? new List<Facility>();
+
+        var viewModel = new RoomSearchViewModel
+        {
+            Rooms = rooms.ToList(),
+            BuildingId = buildingId,
+            MinCapacity = minCapacity,
+            FacilityId = facilityId,
+            BuildingSelectList = buildings.Select(b => new SelectListItem
+            {
+                Value = b.Id.ToString(),
+                Text = b.Name
+            }).ToList(),
+            FacilitySelectList = facilities.Select(f => new SelectListItem
+            {
+                Value = f.Id.ToString(),
+                Text = f.Name
+            }).ToList()
+        };
+        return View(viewModel);
     }
 
     private async Task FillSelectLists(RoomViewModel viewModel)

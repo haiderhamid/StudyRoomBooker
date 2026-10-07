@@ -4,7 +4,8 @@ public class Booking
 {
     public int Id { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "Please select a room.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a room.")]
     public int RoomId { get; set; }
 
     [Required(ErrorMessage = "Subject is required.")]

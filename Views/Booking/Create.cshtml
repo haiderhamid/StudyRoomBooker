@@ -20,14 +20,17 @@
                 <span asp-validation-for="Booking.Subject" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Booking.StartTime" class="form-label"></label>
-                <input asp-for="Booking.StartTime" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" />
-                <span asp-validation-for="Booking.StartTime" class="text-danger"></span>
+                <label asp-for="Date" class="form-label"></label>
+                <input asp-for="Date" class="form-control" />
+                <span asp-validation-for="Date" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Booking.EndTime" class="form-label"></label>
-                <input asp-for="Booking.EndTime" asp-format="{0:yyyy-MM-ddTHH:mm}" class="form-control" />
-                <span asp-validation-for="Booking.EndTime" class="text-danger"></span>
+                <label asp-for="FromTime" class="form-label"></label>
+                <select asp-for="FromTime" asp-items="Model.TimeSelectList" class="form-select"></select>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ToTime" class="form-label"></label>
+                <select asp-for="ToTime" asp-items="Model.TimeSelectList" class="form-select"></select>
             </div>
             <div class="mb-3">
                 <label asp-for="Booking.BookedBy" class="form-label"></label>
@@ -39,3 +42,7 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

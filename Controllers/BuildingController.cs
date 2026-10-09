@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 public class BuildingController : Controller
 {
@@ -23,12 +24,14 @@ public class BuildingController : Controller
         return View(buildings.ToList());
     }
 
+    [Authorize]
     [HttpGet]
     public IActionResult Create()
     {
         return View();
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create(Building building)
     {
@@ -45,6 +48,7 @@ public class BuildingController : Controller
         return View(building);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -57,6 +61,7 @@ public class BuildingController : Controller
         return View(building);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Edit(int id, Building building)
     {
@@ -78,6 +83,7 @@ public class BuildingController : Controller
         return View(building);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
@@ -90,6 +96,7 @@ public class BuildingController : Controller
         return View(building);
     }
 
+    [Authorize]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

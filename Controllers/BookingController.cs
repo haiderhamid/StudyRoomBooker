@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 public class BookingController : Controller
 {
@@ -56,6 +57,7 @@ public class BookingController : Controller
         return time.Minute % 15 == 0 && time.Second == 0;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
@@ -73,6 +75,7 @@ public class BookingController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
@@ -114,6 +117,7 @@ public class BookingController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -136,6 +140,7 @@ public class BookingController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Edit(int id, BookingViewModel viewModel)
     {
@@ -181,6 +186,7 @@ public class BookingController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
@@ -193,6 +199,7 @@ public class BookingController : Controller
         return View(booking);
     }
 
+    [Authorize]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

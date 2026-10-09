@@ -63,6 +63,13 @@ using (var scope = app.Services.CreateScope())
 
         context.SaveChanges();
     }
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    if (await userManager.FindByEmailAsync("test@oslomet.no") == null)
+    {
+        var testUser = new IdentityUser { UserName = "test@oslomet.no", Email = "test@oslomet.no" };
+        await userManager.CreateAsync(testUser, "Test123!");
+    }
 }
 
 // Configure the HTTP request pipeline.

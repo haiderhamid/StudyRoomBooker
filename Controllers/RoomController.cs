@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 public class RoomController : Controller
 {
@@ -65,6 +66,7 @@ public class RoomController : Controller
         viewModel.AllFacilities = facilities.ToList();
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
@@ -73,6 +75,7 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create(RoomViewModel viewModel)
     {
@@ -97,6 +100,7 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -116,6 +120,7 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Edit(int id, RoomViewModel viewModel)
     {
@@ -145,6 +150,7 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
@@ -159,6 +165,7 @@ public class RoomController : Controller
         return View(room);
     }
 
+    [Authorize]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

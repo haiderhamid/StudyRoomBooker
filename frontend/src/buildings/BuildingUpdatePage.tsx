@@ -43,8 +43,11 @@ export default function BuildingUpdatePage() {
   }
 
   return (
-    <>
-      <h1 className="mb-4">Edit Building</h1>
+    <div className="form-shell">
+      <header className="page-header">
+        <h1 className="page-title">Edit building</h1>
+        <p className="page-subtitle">Change the details for this building.</p>
+      </header>
       <BuildingForm
         initialValues={building}
         onSubmit={updatedBuilding => mutation.mutate(updatedBuilding)}
@@ -52,6 +55,6 @@ export default function BuildingUpdatePage() {
         submitError={mutation.error?.message ?? null}
         submitLabel="Save changes"
       />
-    </>
+    </div>
   );
 }

@@ -1,23 +1,26 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Form, Row, Col, Button, Card, Badge, Spinner, Alert } from 'react-bootstrap';
+import { Form, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import type { Room } from '../types/room';
 import type { Building } from '../types/building';
 import type { Facility } from '../types/facility';
 import * as RoomService from './RoomService';
 import * as BuildingService from '../buildings/BuildingService';
 import * as FacilityService from '../facilities/FacilityService';
+import { useAuth } from '../auth/AuthContext';
+import RoomTags from '../shared/RoomTags';
 
 export default function RoomListPage() {
   const [buildingId, setBuildingId] = useState<string>('');
   const [minCapacity, setMinCapacity] = useState<string>('');
-  const [facilityId, setFacilityId] = useState<string>('');
+  const [facilityIds, setFacilityIds] = useState<number[]>([]);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: rooms = [], isLoading, error } = useQuery<Room[], Error>({
-    queryKey: ['rooms', buildingId, minCapacity, facilityId],
-    queryFn: () => RoomService.fetchRooms({ buildingId, minCapacity, facilityId }),
+    queryKey: ['rooms', buildingId, minCapacity],
+    queryFn: () => RoomService.fetchRooms({ buildingId, minCapacity, facilityId: '' }),
   });
 
   const { data: buildings = [] } = useQuery<Building[], Error>({
@@ -38,28 +41,43 @@ export default function RoomListPage() {
     },
   });
 
+  const matchingRooms = rooms.filter(room =>
+    facilityIds.every(id => room.facilityIds.includes(id)));
+
+  const isFiltered = buildingId !== '' || minCapacity !== '' || facilityIds.length > 0;
+
   const handleDelete = (room: Room) => {
     if (window.confirm(`Delete room ${room.roomNumber}?`)) {
       deleteMutation.mutate(room.id);
     }
   };
 
-  const clearFilters = () => {
+  const toggleFacility = (id: number) => {
+    setFacilityIds(previous =>
+      previous.includes(id) ? previous.filter(f => f !== id) : [...previous, id]);
+  };
+
+  const resetFilters = () => {
     setBuildingId('');
     setMinCapacity('');
-    setFacilityId('');
+    setFacilityIds([]);
   };
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Rooms</h1>
-        <Link to="/rooms/create" className="btn btn-primary">Create room</Link>
-      </div>
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Rooms</h1>
+          <p className="page-subtitle">Every study room on campus, with seats and equipment.</p>
+        </div>
+        {user && (
+          <Link to="/rooms/create" className="btn btn-primary">Add room</Link>
+        )}
+      </header>
 
-      <Form className="mb-4">
-        <Row className="g-3 align-items-end">
-          <Col md={4}>
+      <Form className="search-panel" onSubmit={e => e.preventDefault()}>
+        <Row className="g-3">
+          <Col xs={7} md={4}>
             <Form.Group controlId="buildingFilter">
               <Form.Label>Building</Form.Label>
               <Form.Select value={buildingId} onChange={e => setBuildingId(e.target.value)}>
@@ -70,34 +88,44 @@ export default function RoomListPage() {
               </Form.Select>
             </Form.Group>
           </Col>
-          <Col md={3}>
+          <Col xs={5} md={2}>
             <Form.Group controlId="capacityFilter">
-              <Form.Label>Minimum capacity</Form.Label>
+              <Form.Label>Group size</Form.Label>
               <Form.Control
                 type="number"
                 min={1}
+                placeholder="Any"
                 value={minCapacity}
                 onChange={e => setMinCapacity(e.target.value)}
               />
             </Form.Group>
           </Col>
-          <Col md={3}>
-            <Form.Group controlId="facilityFilter">
-              <Form.Label>Facility</Form.Label>
-              <Form.Select value={facilityId} onChange={e => setFacilityId(e.target.value)}>
-                <option value="">Any facility</option>
-                {facilities.map(f => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
-          <Col md={2}>
-            <Button variant="outline-secondary" className="w-100" onClick={clearFilters}>
-              Clear
-            </Button>
-          </Col>
         </Row>
+
+        <div className="search-footer">
+          <div className="chip-group" role="group" aria-label="Equipment">
+            <span className="chip-group-label">Equipment</span>
+            {facilities.map(f => {
+              const isActive = facilityIds.includes(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`chip${isActive ? ' is-active' : ''}`}
+                  aria-pressed={isActive}
+                  onClick={() => toggleFacility(f.id)}
+                >
+                  {f.name}
+                </button>
+              );
+            })}
+          </div>
+          {isFiltered && (
+            <button type="button" className="reset-link" onClick={resetFilters}>
+              Reset filters
+            </button>
+          )}
+        </div>
       </Form>
 
       {deleteMutation.error && (
@@ -107,43 +135,42 @@ export default function RoomListPage() {
       )}
 
       {isLoading && (
-        <Spinner animation="border" role="status">
+        <Spinner animation="border" role="status" className="my-4">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
       )}
 
       {error && <Alert variant="danger">Could not load rooms: {error.message}</Alert>}
 
-      {!isLoading && !error && rooms.length === 0 && (
-        <Alert variant="info">No rooms match your search.</Alert>
+      {!isLoading && !error && (
+        <p className="list-count">
+          {matchingRooms.length === 1 ? '1 room' : `${matchingRooms.length} rooms`}
+        </p>
       )}
 
-      <Row xs={1} md={2} lg={3} className="g-4">
-        {rooms.map(room => (
-          <Col key={room.id}>
-            <Card className="h-100 shadow-sm">
-              <Card.Body>
-                <Card.Title>Room {room.roomNumber}</Card.Title>
-                <Card.Subtitle className="mb-2 text-muted">{room.buildingName}</Card.Subtitle>
-                <Card.Text>
-                  Capacity: {room.capacity} {room.capacity === 1 ? 'person' : 'people'}
-                </Card.Text>
-                {room.facilityNames.map(name => (
-                  <Badge key={name} bg="secondary" className="me-1">{name}</Badge>
-                ))}
-              </Card.Body>
-              <Card.Footer className="bg-white border-0">
-                <Link to={`/rooms/update/${room.id}`} className="btn btn-sm btn-outline-primary me-2">
-                  Edit
-                </Link>
-                <Button size="sm" variant="outline-danger" onClick={() => handleDelete(room)}>
+      {!isLoading && !error && matchingRooms.length === 0 && (
+        <p className="empty-state">No rooms match your search. Try fewer filters.</p>
+      )}
+
+      <ul className="item-rows">
+        {matchingRooms.map(room => (
+          <li key={room.id} className="item-row">
+            <div className="item-main">
+              <span className="item-title">Room {room.roomNumber}</span>
+              <span className="item-meta">{room.buildingName}</span>
+              <RoomTags room={room} />
+            </div>
+            {user && (
+              <div className="item-actions">
+                <Link to={`/rooms/update/${room.id}`} className="btn btn-sm btn-quiet">Edit</Link>
+                <button type="button" className="btn btn-sm btn-quiet btn-quiet-danger" onClick={() => handleDelete(room)}>
                   Delete
-                </Button>
-              </Card.Footer>
-            </Card>
-          </Col>
+                </button>
+              </div>
+            )}
+          </li>
         ))}
-      </Row>
+      </ul>
     </>
   );
 }

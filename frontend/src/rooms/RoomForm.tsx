@@ -83,7 +83,7 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
   };
 
   return (
-    <Card className="shadow-sm" style={{ maxWidth: '500px' }}>
+    <Card>
       <Card.Body>
         {submitError && <Alert variant="danger">{submitError}</Alert>}
 
@@ -105,7 +105,7 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
               onChange={e => setBuildingId(e.target.value)}
               isInvalid={!!errors.buildingId}
             >
-              <option value="">-- Select a building --</option>
+              <option value="">Select a building</option>
               {buildings.map(b => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
@@ -114,7 +114,7 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="capacity">
-            <Form.Label>Capacity</Form.Label>
+            <Form.Label>Seats</Form.Label>
             <Form.Control
               type="number"
               min={1}
@@ -126,24 +126,32 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
             <Form.Control.Feedback type="invalid">{errors.capacity}</Form.Control.Feedback>
           </Form.Group>
 
-          <fieldset className="mb-3">
-            <legend className="form-label fs-6">Facilities</legend>
-            {facilities.map(f => (
-              <Form.Check
-                key={f.id}
-                type="checkbox"
-                id={`facility-${f.id}`}
-                label={f.name}
-                checked={facilityIds.includes(f.id)}
-                onChange={() => toggleFacility(f.id)}
-              />
-            ))}
+          <fieldset>
+            <legend className="form-label">Equipment</legend>
+            <div className="chip-group">
+              {facilities.map(f => {
+                const isActive = facilityIds.includes(f.id);
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={`chip${isActive ? ' is-active' : ''}`}
+                    aria-pressed={isActive}
+                    onClick={() => toggleFacility(f.id)}
+                  >
+                    {f.name}
+                  </button>
+                );
+              })}
+            </div>
           </fieldset>
 
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
-          <Link to="/rooms" className="btn btn-outline-secondary ms-2">Cancel</Link>
+          <div className="form-actions">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : submitLabel}
+            </Button>
+            <Link to="/rooms" className="btn btn-quiet">Cancel</Link>
+          </div>
         </Form>
       </Card.Body>
     </Card>

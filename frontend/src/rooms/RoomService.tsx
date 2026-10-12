@@ -1,5 +1,5 @@
 import type { Room } from '../types/room';
-import { API_URL, headers, handleResponse, handleEmptyResponse } from '../shared/apiHelpers';
+import { API_URL, getAuthHeaders, handleResponse, handleEmptyResponse } from '../shared/apiHelpers';
 
 export interface RoomFilters {
   buildingId: string;
@@ -25,7 +25,7 @@ export async function fetchRoomById(roomId: string): Promise<Room> {
 export async function createRoom(room: Room): Promise<Room> {
   const response = await fetch(`${API_URL}/api/roomapi/create`, {
     method: 'POST',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify(room),
   });
   return handleResponse<Room>(response);
@@ -34,7 +34,7 @@ export async function createRoom(room: Room): Promise<Room> {
 export async function updateRoom(roomId: number, room: Room): Promise<Room> {
   const response = await fetch(`${API_URL}/api/roomapi/update/${roomId}`, {
     method: 'PUT',
-    headers,
+    headers: getAuthHeaders(),
     body: JSON.stringify(room),
   });
   return handleResponse<Room>(response);
@@ -43,6 +43,7 @@ export async function updateRoom(roomId: number, room: Room): Promise<Room> {
 export async function deleteRoom(roomId: number): Promise<void> {
   const response = await fetch(`${API_URL}/api/roomapi/delete/${roomId}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   return handleEmptyResponse(response);
 }

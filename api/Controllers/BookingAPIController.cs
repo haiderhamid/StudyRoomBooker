@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -76,6 +77,7 @@ public class BookingAPIController : ControllerBase
         return Ok(ToDto(booking));
     }
 
+    [Authorize]
     [HttpPost("create")]
     public async Task<IActionResult> Create([FromBody] BookingDto bookingDto)
     {
@@ -110,6 +112,7 @@ public class BookingAPIController : ControllerBase
         return StatusCode(500, "Internal server error");
     }
 
+    [Authorize]
     [HttpPut("update/{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] BookingDto bookingDto)
     {
@@ -145,6 +148,7 @@ public class BookingAPIController : ControllerBase
         return StatusCode(500, "Internal server error");
     }
 
+    [Authorize]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

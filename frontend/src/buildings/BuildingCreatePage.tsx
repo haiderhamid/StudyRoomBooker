@@ -17,14 +17,17 @@ export default function BuildingCreatePage() {
   });
 
   return (
-    <>
-      <h1 className="mb-4">Create Building</h1>
+    <div className="form-shell">
+      <header className="page-header">
+        <h1 className="page-title">Add a building</h1>
+        <p className="page-subtitle">Add a campus building that has study rooms.</p>
+      </header>
       <BuildingForm
         onSubmit={building => mutation.mutate(building)}
         isSubmitting={mutation.isPending}
         submitError={mutation.error?.message ?? null}
-        submitLabel="Create"
+        submitLabel="Add building"
       />
-    </>
+    </div>
   );
 }

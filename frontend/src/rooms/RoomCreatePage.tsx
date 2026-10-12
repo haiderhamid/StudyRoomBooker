@@ -18,14 +18,17 @@ export default function RoomCreatePage() {
   });
 
   return (
-    <>
-      <h1 className="mb-4">Create Room</h1>
+    <div className="form-shell">
+      <header className="page-header">
+        <h1 className="page-title">Add a room</h1>
+        <p className="page-subtitle">Add a new study room that students can book.</p>
+      </header>
       <RoomForm
         onSubmit={room => mutation.mutate(room)}
         isSubmitting={mutation.isPending}
         submitError={mutation.error?.message ?? null}
-        submitLabel="Create"
+        submitLabel="Add room"
       />
-    </>
+    </div>
   );
 }

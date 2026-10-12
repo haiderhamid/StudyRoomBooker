@@ -1,19 +1,24 @@
 import { Navbar, Nav, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
+import AuthSection from '../auth/AuthSection';
+import { useAuth } from '../auth/AuthContext';
 
 export default function NavMenu() {
+  const { user } = useAuth();
+
   return (
-    <Navbar bg="white" expand="sm" className="border-bottom shadow-sm">
-      <Container fluid>
+    <Navbar expand="md" sticky="top" className="srb-navbar">
+      <Container>
         <Navbar.Brand as={Link} to="/">StudyRoomBooker</Navbar.Brand>
         <Navbar.Toggle aria-controls="main-nav" />
         <Navbar.Collapse id="main-nav">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/">Home</Nav.Link>
-            <Nav.Link as={Link} to="/rooms">Rooms</Nav.Link>
-            <Nav.Link as={Link} to="/bookings">Bookings</Nav.Link>
-            <Nav.Link as={Link} to="/buildings">Buildings</Nav.Link>
+            <Nav.Link as={NavLink} to="/" end>Find a room</Nav.Link>
+            <Nav.Link as={NavLink} to="/bookings">Bookings</Nav.Link>
+            <Nav.Link as={NavLink} to="/rooms">Rooms</Nav.Link>
+            {user && <Nav.Link as={NavLink} to="/buildings">Buildings</Nav.Link>}
           </Nav>
+          <AuthSection />
         </Navbar.Collapse>
       </Container>
     </Navbar>

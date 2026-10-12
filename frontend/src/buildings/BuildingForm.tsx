@@ -53,7 +53,7 @@ export default function BuildingForm({ initialValues, onSubmit, isSubmitting, su
   };
 
   return (
-    <Card className="shadow-sm" style={{ maxWidth: '500px' }}>
+    <Card>
       <Card.Body>
         {submitError && <Alert variant="danger">{submitError}</Alert>}
 
@@ -68,7 +68,7 @@ export default function BuildingForm({ initialValues, onSubmit, isSubmitting, su
             <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
           </Form.Group>
 
-          <Form.Group className="mb-3" controlId="address">
+          <Form.Group controlId="address">
             <Form.Label>Address</Form.Label>
             <Form.Control
               value={address}
@@ -78,10 +78,12 @@ export default function BuildingForm({ initialValues, onSubmit, isSubmitting, su
             <Form.Control.Feedback type="invalid">{errors.address}</Form.Control.Feedback>
           </Form.Group>
 
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
-          <Link to="/buildings" className="btn btn-outline-secondary ms-2">Cancel</Link>
+          <div className="form-actions">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : submitLabel}
+            </Button>
+            <Link to="/buildings" className="btn btn-quiet">Cancel</Link>
+          </div>
         </Form>
       </Card.Body>
     </Card>

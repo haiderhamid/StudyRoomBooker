@@ -43,8 +43,11 @@ export default function RoomUpdatePage() {
   }
 
   return (
-    <>
-      <h1 className="mb-4">Edit Room</h1>
+    <div className="form-shell">
+      <header className="page-header">
+        <h1 className="page-title">Edit room</h1>
+        <p className="page-subtitle">Change the details for this room.</p>
+      </header>
       <RoomForm
         initialValues={room}
         onSubmit={updatedRoom => mutation.mutate(updatedRoom)}
@@ -52,6 +55,6 @@ export default function RoomUpdatePage() {
         submitError={mutation.error?.message ?? null}
         submitLabel="Save changes"
       />
-    </>
+    </div>
   );
 }

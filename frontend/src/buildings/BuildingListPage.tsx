@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Table, Button, Spinner, Alert } from 'react-bootstrap';
+import { Spinner, Alert } from 'react-bootstrap';
 import type { Building } from '../types/building';
 import * as BuildingService from './BuildingService';
+import { useAuth } from '../auth/AuthContext';
 
 export default function BuildingListPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: buildings = [], isLoading, error } = useQuery<Building[], Error>({
     queryKey: ['buildings'],
@@ -27,10 +29,15 @@ export default function BuildingListPage() {
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Buildings</h1>
-        <Link to="/buildings/create" className="btn btn-primary">Create building</Link>
-      </div>
+      <header className="page-header">
+        <div>
+          <h1 className="page-title">Buildings</h1>
+          <p className="page-subtitle">The campus buildings that have study rooms.</p>
+        </div>
+        {user && (
+          <Link to="/buildings/create" className="btn btn-primary">Add building</Link>
+        )}
+      </header>
 
       {deleteMutation.error && (
         <Alert variant="danger" dismissible onClose={() => deleteMutation.reset()}>
@@ -39,7 +46,7 @@ export default function BuildingListPage() {
       )}
 
       {isLoading && (
-        <Spinner animation="border" role="status">
+        <Spinner animation="border" role="status" className="my-4">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
       )}
@@ -47,38 +54,30 @@ export default function BuildingListPage() {
       {error && <Alert variant="danger">Could not load buildings: {error.message}</Alert>}
 
       {!isLoading && !error && buildings.length === 0 && (
-        <Alert variant="info">No buildings yet.</Alert>
+        <p className="empty-state">No buildings yet.</p>
       )}
 
-      {buildings.length > 0 && (
-        <Table striped hover responsive className="shadow-sm">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Address</th>
-              <th>Rooms</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {buildings.map(building => (
-              <tr key={building.id}>
-                <td>{building.name}</td>
-                <td>{building.address}</td>
-                <td>{building.roomCount === 1 ? '1 room' : `${building.roomCount} rooms`}</td>
-                <td className="text-end">
-                  <Link to={`/buildings/update/${building.id}`} className="btn btn-sm btn-outline-primary me-2">
-                    Edit
-                  </Link>
-                  <Button size="sm" variant="outline-danger" onClick={() => handleDelete(building)}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+      <ul className="item-rows">
+        {buildings.map(building => (
+          <li key={building.id} className="item-row">
+            <div className="item-main">
+              <span className="item-title">{building.name}</span>
+              <span className="item-meta">{building.address}</span>
+            </div>
+            <span className="room-tag">
+              {building.roomCount === 1 ? '1 room' : `${building.roomCount} rooms`}
+            </span>
+            {user && (
+              <div className="item-actions">
+                <Link to={`/buildings/update/${building.id}`} className="btn btn-sm btn-quiet">Edit</Link>
+                <button type="button" className="btn btn-sm btn-quiet btn-quiet-danger" onClick={() => handleDelete(building)}>
+                  Delete
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </>
   );
 }

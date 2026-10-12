@@ -13,14 +13,17 @@ interface DatePickerProps {
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 function parseDate(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  return new Date(`${value}T00:00:00`);
 }
 
 function buildMonth(year: number, month: number): Date[] {
   const firstDay = new Date(year, month, 1);
-  const offset = (firstDay.getDay() + 6) % 7;
-  return Array.from({ length: 42 }, (_, index) => new Date(year, month, 1 - offset + index));
+  const daysBeforeMonday = (firstDay.getDay() + 6) % 7;
+  const days: Date[] = [];
+  for (let i = 0; i < 42; i++) {
+    days.push(new Date(year, month, 1 - daysBeforeMonday + i));
+  }
+  return days;
 }
 
 export default function DatePicker({ id, value, onChange, minDate, isInvalid }: DatePickerProps) {

@@ -58,9 +58,9 @@ export default function HomePage() {
       b.startTime.substring(11, 16) < toTime &&
       b.endTime.substring(11, 16) > fromTime);
 
-  const sortedRooms = hasTime
-    ? [...matchingRooms].sort((a, b) => Number(isFree(b.id)) - Number(isFree(a.id)))
-    : matchingRooms;
+  const freeRooms = matchingRooms.filter(room => isFree(room.id));
+  const bookedRooms = matchingRooms.filter(room => !isFree(room.id));
+  const sortedRooms = hasTime ? [...freeRooms, ...bookedRooms] : matchingRooms;
 
   const displayDate = new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -224,7 +224,7 @@ export default function HomePage() {
         {sortedRooms.map(room => (
           <li key={room.id} className="room-row">
             <div>
-              <span className="room-number">Room {room.roomNumber}</span>
+              <Link to={`/rooms/${room.id}`} className="room-number room-link" aria-label={`Room ${room.roomNumber}`}>{room.roomNumber}</Link>
               <span className="room-meta">{room.buildingName}</span>
               <RoomTags room={room} />
             </div>

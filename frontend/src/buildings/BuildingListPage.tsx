@@ -7,7 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 
 export default function BuildingListPage() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
 
   const { data: buildings = [], isLoading, error } = useQuery<Building[], Error>({
     queryKey: ['buildings'],
@@ -34,7 +34,7 @@ export default function BuildingListPage() {
           <h1 className="page-title">Buildings</h1>
           <p className="page-subtitle">The campus buildings that have study rooms.</p>
         </div>
-        {user && (
+        {isAdmin && (
           <Link to="/buildings/create" className="btn btn-primary">Add building</Link>
         )}
       </header>
@@ -67,7 +67,7 @@ export default function BuildingListPage() {
             <span className="room-tag">
               {building.roomCount === 1 ? '1 room' : `${building.roomCount} rooms`}
             </span>
-            {user && (
+            {isAdmin && (
               <div className="item-actions">
                 <Link to={`/buildings/update/${building.id}`} className="btn btn-sm btn-quiet">Edit</Link>
                 <button type="button" className="btn btn-sm btn-quiet btn-quiet-danger" onClick={() => handleDelete(building)}>

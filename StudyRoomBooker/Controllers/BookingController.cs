@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
@@ -15,6 +16,7 @@ public class BookingController : Controller
         _logger = logger;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -24,7 +26,9 @@ public class BookingController : Controller
             _logger.LogError("[BookingController] Booking list not found while executing GetAll().");
             return View(new List<Booking>());
         }
-        return View(bookings.ToList());
+
+        var userName = User.Identity?.Name;
+        return View(bookings.Where(b => b.BookedBy == userName).ToList());
     }
 
     // Makes the list of rooms for the dropdown in Create and Edit.
@@ -34,14 +38,14 @@ public class BookingController : Controller
         return rooms.Select(r => new SelectListItem
         {
             Value = r.Id.ToString(),
-            Text = $"{r.RoomNumber} ({r.Building?.Name})"
+            Text = $"Room {r.RoomNumber}, {r.Building?.Name} ({r.Capacity} seats)"
         }).ToList();
     }
 
     private List<SelectListItem> GetTimeSelectList()
     {
         var times = new List<SelectListItem>();
-        for (var time = new TimeSpan(7, 0, 0); time <= new TimeSpan(22, 0, 0); time = time.Add(TimeSpan.FromMinutes(15)))
+        for (var time = new TimeSpan(HomeViewModel.DayStartHour, 0, 0); time <= new TimeSpan(HomeViewModel.DayEndHour, 0, 0); time = time.Add(TimeSpan.FromMinutes(15)))
         {
             times.Add(new SelectListItem
             {
@@ -52,38 +56,13 @@ public class BookingController : Controller
         return times;
     }
 
-    private bool IsQuarterHour(DateTime time)
+    private bool CanManage(Booking booking)
     {
-        return time.Minute % 15 == 0 && time.Second == 0;
+        return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
-    [Authorize]
-    [HttpGet]
-    public async Task<IActionResult> Create()
+    private void ValidateTimes(Booking booking)
     {
-        var now = DateTime.Now;
-        var start = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddMinutes((now.Minute / 15 + 1) * 15);
-
-        var viewModel = new BookingViewModel
-        {
-            Date = start.Date,
-            FromTime = start.TimeOfDay,
-            ToTime = start.AddHours(1).TimeOfDay,
-            RoomSelectList = await GetRoomSelectListAsync(),
-            TimeSelectList = GetTimeSelectList()
-        };
-        return View(viewModel);
-    }
-
-    [Authorize]
-    [HttpPost]
-    public async Task<IActionResult> Create(BookingViewModel viewModel)
-    {
-        var booking = viewModel.Booking;
-        booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
-        booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
-
-        // End time has to be after start time
         if (booking.EndTime <= booking.StartTime)
         {
             ModelState.AddModelError("", "End time must be after start time.");
@@ -94,7 +73,79 @@ public class BookingController : Controller
             ModelState.AddModelError("", "Bookings must start and end at :00, :15, :30 or :45.");
         }
 
-        // Check if the room is already booked in this period (0 = no booking to skip)
+        if (booking.StartTime < DateTime.Now)
+        {
+            ModelState.AddModelError("", "You cannot book a time that has already passed.");
+        }
+
+        if (booking.StartTime.TimeOfDay < TimeSpan.FromHours(HomeViewModel.DayStartHour) ||
+            booking.EndTime.TimeOfDay > TimeSpan.FromHours(HomeViewModel.DayEndHour) ||
+            booking.EndTime.Date != booking.StartTime.Date)
+        {
+            ModelState.AddModelError("", "Rooms can be booked between 07:00 and 20:00.");
+        }
+    }
+
+    private bool IsQuarterHour(DateTime time)
+    {
+        return time.Minute % 15 == 0 && time.Second == 0;
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Create(int? roomId = null, DateTime? date = null, string? from = null, string? to = null)
+    {
+        var now = DateTime.Now;
+        var start = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddMinutes((now.Minute / 15 + 1) * 15);
+        if (start.Hour < HomeViewModel.DayStartHour || start.Hour >= HomeViewModel.DayEndHour - 1)
+        {
+            var firstDay = start.Hour >= HomeViewModel.DayEndHour - 1 ? start.Date.AddDays(1) : start.Date;
+            start = firstDay.AddHours(9);
+        }
+
+        var viewModel = new BookingViewModel
+        {
+            Date = start.Date,
+            FromTime = start.TimeOfDay,
+            ToTime = start.AddHours(1).TimeOfDay,
+            RoomSelectList = await GetRoomSelectListAsync(),
+            TimeSelectList = GetTimeSelectList()
+        };
+
+        if (roomId.HasValue)
+        {
+            viewModel.Booking.RoomId = roomId.Value;
+        }
+
+        if (date.HasValue && date.Value.Date >= DateTime.Today)
+        {
+            viewModel.Date = date.Value.Date;
+        }
+
+        if (TimeSpan.TryParse(from, CultureInfo.InvariantCulture, out var fromTime) &&
+            TimeSpan.TryParse(to, CultureInfo.InvariantCulture, out var toTime) &&
+            toTime > fromTime)
+        {
+            viewModel.FromTime = fromTime;
+            viewModel.ToTime = toTime;
+        }
+
+        return View(viewModel);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(BookingViewModel viewModel)
+    {
+        var booking = viewModel.Booking;
+        booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
+        booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
+        booking.BookedBy = User.Identity?.Name ?? string.Empty;
+        ModelState.Remove("Booking.BookedBy");
+
+        ValidateTimes(booking);
+
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
@@ -128,6 +179,11 @@ public class BookingController : Controller
             return NotFound();
         }
 
+        if (!CanManage(booking))
+        {
+            return Forbid();
+        }
+
         var viewModel = new BookingViewModel
         {
             Booking = booking,
@@ -142,29 +198,34 @@ public class BookingController : Controller
 
     [Authorize]
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, BookingViewModel viewModel)
     {
-        var booking = viewModel.Booking;
-
-        if (id != booking.Id)
+        if (id != viewModel.Booking.Id)
         {
             return NotFound();
         }
 
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found for editing.", id);
+            return NotFound();
+        }
+
+        if (!CanManage(booking))
+        {
+            return Forbid();
+        }
+
+        booking.RoomId = viewModel.Booking.RoomId;
+        booking.Subject = viewModel.Booking.Subject;
         booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
         booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
+        ModelState.Remove("Booking.BookedBy");
 
-        if (booking.EndTime <= booking.StartTime)
-        {
-            ModelState.AddModelError("", "End time must be after start time.");
-        }
+        ValidateTimes(booking);
 
-        if (!IsQuarterHour(booking.StartTime) || !IsQuarterHour(booking.EndTime))
-        {
-            ModelState.AddModelError("", "Bookings must start and end at :00, :15, :30 or :45.");
-        }
-
-        // Same check as in Create, but skip the booking we are editing.
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
@@ -196,13 +257,31 @@ public class BookingController : Controller
             _logger.LogWarning("[BookingController] Booking with Id {Id} not found for deletion.", id);
             return NotFound();
         }
+
+        if (!CanManage(booking))
+        {
+            return Forbid();
+        }
         return View(booking);
     }
 
     [Authorize]
     [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found for deletion.", id);
+            return NotFound();
+        }
+
+        if (!CanManage(booking))
+        {
+            return Forbid();
+        }
+
         bool deleted = await _bookingRepository.Delete(id);
         if (deleted)
         {

@@ -1,25 +1,35 @@
 @model Building
+@{
+    ViewData["Title"] = "Add a building";
+}
 
-<h1 class="mb-4">Create Building</h1>
+<div class="form-shell">
+    <header class="page-header">
+        <h1 class="page-title">Add a building</h1>
+        <p class="page-subtitle">Add a campus building that has study rooms.</p>
+    </header>
 
-<div class="card shadow-sm" style="max-width: 500px;">
-    <div class="card-body">
-        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <div class="card">
+        <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger"></div>
 
-        <form asp-action="Create" method="post">
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Address" class="form-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
-            </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-        </form>
+            <form asp-action="Create" method="post">
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">Name</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Address" class="form-label">Address</label>
+                    <input asp-for="Address" class="form-control" />
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add building</button>
+                    <a asp-action="Index" class="btn btn-quiet">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

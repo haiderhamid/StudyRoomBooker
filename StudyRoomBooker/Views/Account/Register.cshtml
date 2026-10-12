@@ -1,30 +1,44 @@
 @model RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+}
 
-<h1 class="mb-4">Register</h1>
+<div class="form-shell form-shell-narrow">
+    <header class="page-header">
+        <h1 class="page-title">Create account</h1>
+        <p class="page-subtitle">One account to book study rooms.</p>
+    </header>
 
-<div class="card shadow-sm" style="max-width: 500px;">
-    <div class="card-body">
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="card">
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-        <form asp-action="Register" method="post">
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label"></label>
-                <input asp-for="Password" class="form-control" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="ConfirmPassword" class="form-label"></label>
-                <input asp-for="ConfirmPassword" class="form-control" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button type="submit" class="btn btn-primary">Register</button>
-        </form>
+            <form asp-action="Register" method="post">
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="ConfirmPassword" class="form-label">Confirm password</label>
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary w-100">Create account</button>
+                </div>
+            </form>
+        </div>
     </div>
+
+    <p class="form-switch-link">
+        Already have an account? <a asp-action="Login">Log in</a>
+    </p>
 </div>
 
 @section Scripts {

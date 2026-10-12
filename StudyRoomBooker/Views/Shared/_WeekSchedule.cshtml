@@ -1,0 +1,109 @@
+@model WeekScheduleViewModel
+@{
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
+    var isAdmin = User.IsInRole("Admin");
+    var userName = User.Identity?.Name;
+    var days = Enumerable.Range(0, 7).Select(i => Model.WeekStart.AddDays(i)).ToList();
+    var hours = Enumerable.Range(HomeViewModel.DayStartHour, HomeViewModel.DayEndHour - HomeViewModel.DayStartHour + 1).ToList();
+    var previousWeek = Model.WeekStart.AddDays(-7).ToString("yyyy-MM-dd");
+    var nextWeek = Model.WeekStart.AddDays(7).ToString("yyyy-MM-dd");
+    var thisWeek = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<section class="schedule" aria-label="Weekly schedule">
+    <div class="schedule-toolbar">
+        <div class="schedule-nav">
+            <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId" asp-route-week="@previousWeek"
+               data-week="@previousWeek" class="schedule-arrow" aria-label="Previous week">‹</a>
+            <h2 class="schedule-title">Week @Model.WeekNumber</h2>
+            <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId" asp-route-week="@nextWeek"
+               data-week="@nextWeek" class="schedule-arrow" aria-label="Next week">›</a>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <span class="legend">
+                <span class="legend-swatch" aria-hidden="true"></span>
+                Booked
+            </span>
+            <span class="legend">
+                <span class="legend-swatch legend-swatch-mine" aria-hidden="true"></span>
+                Your booking
+            </span>
+            @if (Model.SelectedStart.HasValue)
+            {
+                <span class="legend">
+                    <span class="legend-swatch legend-swatch-selected" aria-hidden="true"></span>
+                    Your time
+                </span>
+            }
+            <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId"
+               data-week="@thisWeek" class="btn btn-sm btn-quiet">This week</a>
+        </div>
+    </div>
+
+    @if (Model.SelectionIsBooked)
+    {
+        <p class="schedule-warning" role="status">The room is already booked in the time you have chosen.</p>
+    }
+
+    <div class="schedule-scroll">
+        <div class="schedule-grid">
+            <div class="schedule-corner" aria-hidden="true"></div>
+            @foreach (var day in days)
+            {
+                <div class="schedule-day-head @(day == DateTime.Today ? "is-today" : "")">
+                    <span>@day.ToString("ddd", culture)</span>
+                    <strong>@day.ToString("d/M", culture)</strong>
+                </div>
+            }
+
+            <div class="schedule-times" aria-hidden="true">
+                @foreach (var hour in hours)
+                {
+                    <span style="top: @HomeViewModel.PercentOfDay(TimeSpan.FromHours(hour))%">@hour.ToString("00"):00</span>
+                }
+            </div>
+
+            @foreach (var day in days)
+            {
+                <div class="schedule-day @(day == DateTime.Today ? "is-today" : "")">
+                    @foreach (var booking in Model.Bookings.Where(b => b.StartTime.Date == day))
+                    {
+                        var start = booking.StartTime.TimeOfDay;
+                        var end = booking.EndTime.TimeOfDay;
+                        var style = $"top: {HomeViewModel.PercentOfDay(start)}%; height: {HomeViewModel.WidthOfSpan(start, end)}%";
+                        var isMine = booking.BookedBy == userName;
+                        var time = $"{booking.StartTime:HH:mm}–{booking.EndTime:HH:mm}";
+
+                        if (isAdmin || isMine)
+                        {
+                            <a asp-controller="Booking" asp-action="Edit" asp-route-id="@booking.Id"
+                               class="schedule-booking @(isMine ? "is-mine" : "")" style="@style"
+                               aria-label="@booking.Subject, @time. Edit booking">
+                                <strong>@booking.Subject</strong>
+                                <span>@time</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <div class="schedule-booking" style="@style" aria-label="Booked @time: @booking.Subject">
+                                <strong>@booking.Subject</strong>
+                                <span>@time</span>
+                            </div>
+                        }
+                    }
+
+                    @if (Model.SelectedStart.HasValue && Model.SelectedEnd.HasValue && Model.SelectedStart.Value.Date == day)
+                    {
+                        var selectedStart = Model.SelectedStart.Value.TimeOfDay;
+                        var selectedEnd = Model.SelectedEnd.Value.TimeOfDay;
+                        <div class="schedule-selected @(Model.SelectionIsBooked ? "is-conflict" : "")"
+                             style="top: @HomeViewModel.PercentOfDay(selectedStart)%; height: @HomeViewModel.WidthOfSpan(selectedStart, selectedEnd)%"
+                             aria-hidden="true">
+                            <span>Your time</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</section>

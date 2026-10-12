@@ -1,66 +1,93 @@
 @model RoomSearchViewModel
+@{
+    ViewData["Title"] = "Rooms";
+    var isAdmin = User.IsInRole("Admin");
+    var isFiltered = Model.BuildingId != null || Model.MinCapacity != null || Model.FacilityIds.Any();
+}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Rooms</h1>
-    <a asp-action="Create" class="btn btn-primary">+ New Room</a>
-</div>
+<header class="page-header">
+    <div>
+        <h1 class="page-title">Rooms</h1>
+        <p class="page-subtitle">Every study room on campus, with seats and equipment.</p>
+    </div>
+    @if (isAdmin)
+    {
+        <a asp-action="Create" class="btn btn-primary">Add room</a>
+    }
+</header>
 
-<form asp-action="Index" method="get" class="card shadow-sm mb-4">
-    <div class="card-body row g-3 align-items-end">
-        <div class="col-md-3">
+<form asp-action="Index" method="get" class="search-panel" data-auto-submit>
+    <div class="row g-3 align-items-end">
+        <div class="col-7 col-md-4">
             <label asp-for="BuildingId" class="form-label">Building</label>
             <select asp-for="BuildingId" asp-items="Model.BuildingSelectList" class="form-select">
                 <option value="">All buildings</option>
             </select>
         </div>
-        <div class="col-md-3">
-            <label asp-for="MinCapacity" class="form-label">Minimum seats</label>
+        <div class="col-5 col-md-2">
+            <label asp-for="MinCapacity" class="form-label">Group size</label>
             <input asp-for="MinCapacity" type="number" min="1" class="form-control" placeholder="Any" />
         </div>
-        <div class="col-md-3">
-            <label asp-for="FacilityId" class="form-label">Equipment</label>
-            <select asp-for="FacilityId" asp-items="Model.FacilitySelectList" class="form-select">
-                <option value="">Any equipment</option>
-            </select>
+    </div>
+
+    <div class="search-footer">
+        <div class="chip-group" role="group" aria-label="Equipment">
+            <span class="chip-group-label">Equipment</span>
+            @foreach (var facility in Model.FacilitySelectList)
+            {
+                <input type="checkbox" class="btn-check" name="facilityIds" id="facility-@facility.Value"
+                       value="@facility.Value" checked="@Model.FacilityIds.Contains(int.Parse(facility.Value))" />
+                <label class="chip" for="facility-@facility.Value">@facility.Text</label>
+            }
         </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-primary">Search</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        <div class="d-flex align-items-center gap-3">
+            @if (isFiltered)
+            {
+                <a asp-action="Index" class="reset-link">Reset filters</a>
+            }
+            <noscript>
+                <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            </noscript>
         </div>
     </div>
 </form>
 
+<p class="list-count">@(Model.Rooms.Count == 1 ? "1 room" : $"{Model.Rooms.Count} rooms")</p>
+
 @if (!Model.Rooms.Any())
 {
-    <div class="alert alert-info">No rooms match your search.</div>
+    <p class="empty-state">No rooms match your search. Try fewer filters.</p>
 }
-else
-{
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var room in Model.Rooms)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Room @room.RoomNumber</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">@room.Building?.Name</h6>
-                        <p class="card-text">Capacity: <span class="badge bg-primary">@room.Capacity people</span></p>
-                        @if (room.RoomFacilities != null && room.RoomFacilities.Any())
-                        {
-                            <p class="card-text">
-                                @foreach (var rf in room.RoomFacilities)
-                                {
-                                    <span class="badge bg-secondary me-1">@rf.Facility?.Name</span>
-                                }
-                            </p>
-                        }
-                    </div>
-                    <div class="card-footer bg-white border-0 text-end">
-                        <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                    </div>
-                </div>
+
+<ul class="room-grid">
+    @foreach (var room in Model.Rooms)
+    {
+        <li class="room-card">
+            <a asp-action="Details" asp-route-id="@room.Id" class="room-number stretched-link" aria-label="Room @room.RoomNumber">@room.RoomNumber</a>
+            <span class="item-meta">@room.Building?.Name</span>
+            <div class="room-tags">
+                <span class="room-tag room-tag-capacity">
+                    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                        <circle cx="8" cy="5" r="3" fill="currentColor" />
+                        <path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" fill="currentColor" />
+                    </svg>
+                    @room.Capacity @(room.Capacity == 1 ? "seat" : "seats")
+                </span>
+                @if (room.RoomFacilities != null)
+                {
+                    @foreach (var rf in room.RoomFacilities)
+                    {
+                        <span class="room-tag">@rf.Facility?.Name</span>
+                    }
+                }
             </div>
-        }
-    </div>
-}
+            @if (isAdmin)
+            {
+                <div class="item-actions">
+                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-sm btn-quiet">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-quiet btn-quiet-danger">Delete</a>
+                </div>
+            }
+        </li>
+    }
+</ul>

@@ -30,8 +30,8 @@ export default function BookingListPage() {
   const { user } = useAuth();
 
   const { data: bookings = [], isLoading, error } = useQuery<Booking[], Error>({
-    queryKey: ['bookings'],
-    queryFn: BookingService.fetchBookings,
+    queryKey: ['bookings', 'mine', user?.sub ?? ''],
+    queryFn: BookingService.fetchMyBookings,
   });
 
   const deleteMutation = useMutation<void, Error, number>({
@@ -47,34 +47,31 @@ export default function BookingListPage() {
     }
   };
 
-  const today = todayString();
+  const now = new Date();
+  const hasStarted = (booking: Booking) => new Date(booking.startTime) <= now;
+  const hasEnded = (booking: Booking) => new Date(booking.endTime) <= now;
   const visibleBookings = bookings
-    .filter(b => (view === 'upcoming'
-      ? b.startTime.substring(0, 10) >= today
-      : b.startTime.substring(0, 10) < today))
+    .filter(b => (view === 'upcoming' ? !hasEnded(b) : hasEnded(b)))
     .sort((a, b) => (view === 'upcoming'
       ? a.startTime.localeCompare(b.startTime)
       : b.startTime.localeCompare(a.startTime)));
 
-  const days = visibleBookings.reduce<Record<string, Booking[]>>((groups, booking) => {
+  const dates: string[] = [];
+  for (const booking of visibleBookings) {
     const date = booking.startTime.substring(0, 10);
-    if (!groups[date]) {
-      groups[date] = [];
+    if (!dates.includes(date)) {
+      dates.push(date);
     }
-    groups[date].push(booking);
-    return groups;
-  }, {});
+  }
 
   return (
     <>
       <header className="page-header">
         <div>
-          <h1 className="page-title">Bookings</h1>
-          <p className="page-subtitle">See who has booked which room, and when.</p>
+          <h1 className="page-title">My bookings</h1>
+          <p className="page-subtitle">The study rooms you have booked.</p>
         </div>
-        {user && (
-          <Link to="/bookings/create" className="btn btn-primary">New booking</Link>
-        )}
+        <Link to="/" className="btn btn-primary">Book a room</Link>
       </header>
 
       <div className="segmented" role="group" aria-label="Show bookings">
@@ -108,30 +105,31 @@ export default function BookingListPage() {
         </Spinner>
       )}
 
-      {error && <Alert variant="danger">Could not load bookings: {error.message}</Alert>}
+      {error && <Alert variant="danger">Could not load your bookings: {error.message}</Alert>}
 
       {!isLoading && !error && visibleBookings.length === 0 && (
-        <p className="empty-state">
-          {view === 'upcoming' ? 'No upcoming bookings.' : 'No past bookings.'}
-        </p>
+        <div className="empty-state">
+          <p>{view === 'upcoming' ? 'You have no upcoming bookings.' : 'You have no past bookings.'}</p>
+          {view === 'upcoming' && <Link to="/" className="btn btn-outline-secondary">Find a room</Link>}
+        </div>
       )}
 
-      {Object.entries(days).map(([date, dayBookings]) => (
+      {dates.map(date => (
         <section key={date} className="day-group">
           <h2 className="day-heading">{formatDayHeading(date)}</h2>
           <ul className="item-rows">
-            {dayBookings.map(booking => (
-              <li key={booking.id} className="item-row booking-row">
+            {visibleBookings.filter(b => b.startTime.substring(0, 10) === date).map(booking => (
+              <li key={booking.id} className="item-row">
                 <span className="booking-time">
                   {booking.startTime.substring(11, 16)}–{booking.endTime.substring(11, 16)}
                 </span>
                 <div className="item-main">
                   <span className="item-title">{booking.subject}</span>
                   <span className="item-meta">
-                    Room {booking.roomNumber} · {booking.buildingName} · {booking.bookedBy}
+                    <Link to={`/rooms/${booking.roomId}`}>Room {booking.roomNumber}</Link> · {booking.buildingName}
                   </span>
                 </div>
-                {user && (
+                {!hasStarted(booking) && (
                   <div className="item-actions">
                     <Link to={`/bookings/update/${booking.id}`} className="btn btn-sm btn-quiet">Edit</Link>
                     <button type="button" className="btn btn-sm btn-quiet btn-quiet-danger" onClick={() => handleDelete(booking)}>

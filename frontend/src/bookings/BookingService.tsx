@@ -2,12 +2,23 @@ import type { Booking } from '../types/booking';
 import { API_URL, getAuthHeaders, handleResponse, handleEmptyResponse } from '../shared/apiHelpers';
 
 export async function fetchBookings(): Promise<Booking[]> {
-  const response = await fetch(`${API_URL}/api/bookingapi/bookinglist`);
+  const response = await fetch(`${API_URL}/api/bookingapi/bookinglist`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<Booking[]>(response);
+}
+
+export async function fetchMyBookings(): Promise<Booking[]> {
+  const response = await fetch(`${API_URL}/api/bookingapi/mybookings`, {
+    headers: getAuthHeaders(),
+  });
   return handleResponse<Booking[]>(response);
 }
 
 export async function fetchBookingById(bookingId: string): Promise<Booking> {
-  const response = await fetch(`${API_URL}/api/bookingapi/${bookingId}`);
+  const response = await fetch(`${API_URL}/api/bookingapi/${bookingId}`, {
+    headers: getAuthHeaders(),
+  });
   return handleResponse<Booking>(response);
 }
 

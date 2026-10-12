@@ -49,4 +49,28 @@ public class RoomControllerTests
         Assert.Equal("Delete", viewResult.ViewName);
         _roomRepositoryMock.Verify(r => r.Delete(It.IsAny<int>()), Times.Never);
     }
+
+    [Fact]
+    public async Task Details_ReturnsOnlyBookingsInSelectedWeek()
+    {
+        var monday = new DateTime(2026, 11, 2);
+        var room = new Room { Id = 1, RoomNumber = "101", Capacity = 4, BuildingId = 1 };
+        var bookings = new List<Booking>
+        {
+            new Booking { Id = 1, RoomId = 1, Subject = "This week", BookedBy = "a", StartTime = monday.AddDays(2).AddHours(10), EndTime = monday.AddDays(2).AddHours(11) },
+            new Booking { Id = 2, RoomId = 1, Subject = "Next week", BookedBy = "a", StartTime = monday.AddDays(7).AddHours(10), EndTime = monday.AddDays(7).AddHours(11) },
+            new Booking { Id = 3, RoomId = 2, Subject = "Other room", BookedBy = "a", StartTime = monday.AddHours(10), EndTime = monday.AddHours(11) }
+        };
+        _roomRepositoryMock.Setup(r => r.GetRoomById(1)).ReturnsAsync(room);
+        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(bookings);
+        var controller = CreateController();
+
+        var result = await controller.Details(1, monday.AddDays(3));
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<RoomDetailsViewModel>(viewResult.Model);
+        Assert.Equal(monday, model.Schedule.WeekStart);
+        Assert.Single(model.Schedule.Bookings);
+        Assert.Equal("This week", model.Schedule.Bookings[0].Subject);
+    }
 }

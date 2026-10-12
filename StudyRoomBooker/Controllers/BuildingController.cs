@@ -24,15 +24,16 @@ public class BuildingController : Controller
         return View(buildings.ToList());
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult Create()
     {
         return View();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Building building)
     {
         if (ModelState.IsValid)
@@ -48,7 +49,7 @@ public class BuildingController : Controller
         return View(building);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -61,8 +62,9 @@ public class BuildingController : Controller
         return View(building);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Building building)
     {
         if (id != building.Id)
@@ -83,7 +85,7 @@ public class BuildingController : Controller
         return View(building);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
@@ -96,8 +98,9 @@ public class BuildingController : Controller
         return View(building);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var building = await _buildingRepository.GetBuildingById(id);

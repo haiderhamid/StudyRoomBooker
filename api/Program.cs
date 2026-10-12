@@ -53,6 +53,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
@@ -162,13 +163,33 @@ using (var scope = app.Services.CreateScope())
     var authContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     authContext.Database.Migrate();
 
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var roleName in new[] { "Admin", "Student" })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
+    if (await userManager.FindByNameAsync("admin@oslomet.no") == null)
+    {
+        var adminUser = new AuthUser { UserName = "admin@oslomet.no", Email = "admin@oslomet.no" };
+        await userManager.CreateAsync(adminUser, "Admin123!");
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+
     if (await userManager.FindByNameAsync("test@oslomet.no") == null)
     {
         var testUser = new AuthUser { UserName = "test@oslomet.no", Email = "test@oslomet.no" };
         await userManager.CreateAsync(testUser, "Test123!");
+        await userManager.AddToRoleAsync(testUser, "Student");
     }
 }
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {

@@ -4,11 +4,13 @@ import { Spinner, Alert } from 'react-bootstrap';
 import BookingForm from './BookingForm';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
+import { useAuth } from '../auth/AuthContext';
 
 export default function BookingUpdatePage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user, isAdmin } = useAuth();
 
   const { data: booking, isLoading, error } = useQuery<Booking, Error>({
     queryKey: ['booking', bookingId],
@@ -41,8 +43,12 @@ export default function BookingUpdatePage() {
     return <Alert variant="warning">Booking not found.</Alert>;
   }
 
+  if (!isAdmin && booking.bookedBy !== user?.sub) {
+    return <Alert variant="warning">You can only edit your own bookings.</Alert>;
+  }
+
   return (
-    <div className="form-shell">
+    <div className="booking-page">
       <header className="page-header">
         <h1 className="page-title">Edit booking</h1>
         <p className="page-subtitle">Change the room, day or time for this booking.</p>

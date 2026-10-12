@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { ROLE_CLAIM } from '../types/user';
 import type { User } from '../types/user';
 import type { LoginDto } from '../types/auth';
 import * as AuthService from './AuthService';
@@ -8,6 +9,7 @@ import * as AuthService from './AuthService';
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  isAdmin: boolean;
   isLoading: boolean;
   login: (credentials: LoginDto) => Promise<void>;
   logout: () => void;
@@ -59,8 +61,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setToken(null);
   };
 
+  const isAdmin = user !== null && user[ROLE_CLAIM] === 'Admin';
+
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAdmin, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

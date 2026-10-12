@@ -14,6 +14,16 @@ public class BookingAPIController : ControllerBase
         _logger = logger;
     }
 
+    private BookingDto ToVisibleDto(Booking booking)
+    {
+        var dto = ToDto(booking);
+        if (!CanManage(booking))
+        {
+            dto.BookedBy = string.Empty;
+        }
+        return dto;
+    }
+
     private static BookingDto ToDto(Booking booking)
     {
         return new BookingDto
@@ -34,8 +44,25 @@ public class BookingAPIController : ControllerBase
         return time.Minute % 15 == 0 && time.Second == 0;
     }
 
+    private bool CanManage(Booking booking)
+    {
+        return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
+    }
+
     private async Task ValidateBooking(Booking booking, int excludeBookingId)
     {
+        if (booking.StartTime < DateTime.Now)
+        {
+            ModelState.AddModelError("", "You cannot book a time that has already passed.");
+        }
+
+        if (booking.StartTime.TimeOfDay < TimeSpan.FromHours(7) ||
+            booking.EndTime.TimeOfDay > TimeSpan.FromHours(20) ||
+            booking.EndTime.Date != booking.StartTime.Date)
+        {
+            ModelState.AddModelError("", "Rooms can be booked between 07:00 and 20:00.");
+        }
+
         if (booking.EndTime <= booking.StartTime)
         {
             ModelState.AddModelError("", "End time must be after start time.");
@@ -61,8 +88,23 @@ public class BookingAPIController : ControllerBase
             _logger.LogError("[BookingAPIController] Booking list not found while executing GetAll().");
             return NotFound("Booking list not found");
         }
-        var bookingDtos = bookings.Select(ToDto);
+        var bookingDtos = bookings.Select(ToVisibleDto);
         return Ok(bookingDtos);
+    }
+
+    [Authorize]
+    [HttpGet("mybookings")]
+    public async Task<IActionResult> MyBookings()
+    {
+        var bookings = await _bookingRepository.GetAll();
+        if (bookings == null)
+        {
+            _logger.LogError("[BookingAPIController] Booking list not found while executing GetAll().");
+            return NotFound("Booking list not found");
+        }
+        var userName = User.Identity?.Name;
+        var myBookings = bookings.Where(b => b.BookedBy == userName).Select(ToDto);
+        return Ok(myBookings);
     }
 
     [HttpGet("{id}")]
@@ -74,7 +116,7 @@ public class BookingAPIController : ControllerBase
             _logger.LogWarning("[BookingAPIController] Booking with Id {Id} not found.", id);
             return NotFound("Booking not found");
         }
-        return Ok(ToDto(booking));
+        return Ok(ToVisibleDto(booking));
     }
 
     [Authorize]
@@ -92,7 +134,7 @@ public class BookingAPIController : ControllerBase
             Subject = bookingDto.Subject,
             StartTime = bookingDto.StartTime,
             EndTime = bookingDto.EndTime,
-            BookedBy = bookingDto.BookedBy
+            BookedBy = User.Identity?.Name ?? string.Empty
         };
 
         await ValidateBooking(newBooking, 0);
@@ -121,15 +163,23 @@ public class BookingAPIController : ControllerBase
             return BadRequest("Booking data cannot be null");
         }
 
-        var booking = new Booking
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
         {
-            Id = id,
-            RoomId = bookingDto.RoomId,
-            Subject = bookingDto.Subject,
-            StartTime = bookingDto.StartTime,
-            EndTime = bookingDto.EndTime,
-            BookedBy = bookingDto.BookedBy
-        };
+            _logger.LogWarning("[BookingAPIController] Booking with Id {Id} not found for update.", id);
+            return NotFound("Booking not found");
+        }
+
+        if (!CanManage(booking))
+        {
+            _logger.LogWarning("[BookingAPIController] User {User} tried to update booking {Id} without permission.", User.Identity?.Name, id);
+            return Forbid();
+        }
+
+        booking.RoomId = bookingDto.RoomId;
+        booking.Subject = bookingDto.Subject;
+        booking.StartTime = bookingDto.StartTime;
+        booking.EndTime = bookingDto.EndTime;
 
         await ValidateBooking(booking, id);
         if (!ModelState.IsValid)
@@ -152,6 +202,19 @@ public class BookingAPIController : ControllerBase
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
+        {
+            _logger.LogWarning("[BookingAPIController] Booking with Id {Id} not found for deletion.", id);
+            return NotFound("Booking not found");
+        }
+
+        if (!CanManage(booking))
+        {
+            _logger.LogWarning("[BookingAPIController] User {User} tried to delete booking {Id} without permission.", User.Identity?.Name, id);
+            return Forbid();
+        }
+
         bool returnOk = await _bookingRepository.Delete(id);
         if (!returnOk)
         {

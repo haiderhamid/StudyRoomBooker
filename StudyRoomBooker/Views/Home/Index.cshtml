@@ -1,13 +1,193 @@
-﻿@{
-    ViewData["Title"] = "Home";
+@model HomeViewModel
+@{
+    ViewData["Title"] = "Find a room";
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
+    var hourMarks = Enumerable.Range(HomeViewModel.DayStartHour, HomeViewModel.DayEndHour - HomeViewModel.DayStartHour + 1);
+    var dateValue = Model.Date.ToString("yyyy-MM-dd");
 }
 
-<div class="text-center py-5">
-    <h1 class="display-4 mb-3">Study Room Booker</h1>
-    <p class="lead mb-4">Find and book a study room at OsloMet.</p>
+<section class="hero">
+    <h1>Book a study room.</h1>
+    <p>Pick a day and a time to see which rooms are free.</p>
+</section>
 
-    <div class="d-flex justify-content-center gap-3">
-        <a asp-controller="Room" asp-action="Index" class="btn btn-primary btn-lg">View Rooms</a>
-        <a asp-controller="Booking" asp-action="Index" class="btn btn-outline-primary btn-lg">View Bookings</a>
+<form asp-action="Index" method="get" class="search-panel" data-auto-submit>
+    <div class="row g-3">
+        <div class="col-12 col-md-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" id="date" name="date" class="form-control" value="@dateValue"
+                   min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label for="from" class="form-label">From</label>
+            <select id="from" name="from" class="form-select">
+                <option value="">Any time</option>
+                @foreach (var time in Model.TimeOptions)
+                {
+                    <option value="@time" selected="@(time == Model.FromTime)">@time</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label for="to" class="form-label">To</label>
+            <select id="to" name="to" class="form-select @(Model.TimeIsInvalid ? "is-invalid" : "")"
+                    aria-describedby="to-feedback">
+                <option value="">Any time</option>
+                @foreach (var time in Model.TimeOptions)
+                {
+                    <option value="@time" selected="@(time == Model.ToTime)">@time</option>
+                }
+            </select>
+            <div id="to-feedback" class="invalid-feedback">Must be after the start time.</div>
+        </div>
+        <div class="col-7 col-md-3">
+            <label for="buildingId" class="form-label">Building</label>
+            <select id="buildingId" name="buildingId" class="form-select">
+                <option value="">All buildings</option>
+                @foreach (var building in Model.BuildingSelectList)
+                {
+                    <option value="@building.Value" selected="@(building.Value == Model.BuildingId?.ToString())">@building.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-5 col-md-2">
+            <label for="minCapacity" class="form-label">Group size</label>
+            <input type="number" id="minCapacity" name="minCapacity" min="1" class="form-control"
+                   placeholder="Any" value="@Model.MinCapacity" />
+        </div>
+    </div>
+
+    <div class="search-footer">
+        <div class="chip-group" role="group" aria-label="Equipment">
+            <span class="chip-group-label">Equipment</span>
+            @foreach (var facility in Model.Facilities)
+            {
+                <input type="checkbox" class="btn-check" name="facilityIds" id="facility-@facility.Id"
+                       value="@facility.Id" checked="@Model.FacilityIds.Contains(facility.Id)" />
+                <label class="chip" for="facility-@facility.Id">@facility.Name</label>
+            }
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            @if (Model.IsFiltered)
+            {
+                <a asp-action="Index" class="reset-link">Reset filters</a>
+            }
+            <noscript>
+                <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            </noscript>
+        </div>
+    </div>
+</form>
+
+<div class="results-header">
+    <h2>
+        @Model.Date.ToString("dddd d MMMM", culture)@(Model.HasTime ? $", {Model.FromTime}–{Model.ToTime}" : "")
+    </h2>
+    <div class="d-flex gap-3">
+        <span class="legend">
+            <span class="legend-swatch legend-swatch-free" aria-hidden="true"></span>
+            Free
+        </span>
+        <span class="legend">
+            <span class="legend-swatch" aria-hidden="true"></span>
+            Booked
+        </span>
+        @if (Model.HasTime)
+        {
+            <span class="legend">
+                <span class="legend-swatch legend-swatch-selected" aria-hidden="true"></span>
+                Your time
+            </span>
+        }
     </div>
 </div>
+
+@if (!Model.Rooms.Any())
+{
+    <p class="empty-state">No rooms match your search. Try fewer filters.</p>
+}
+
+<ul class="room-rows">
+    @foreach (var item in Model.Rooms)
+    {
+        var room = item.Room;
+        var description = item.Bookings.Any()
+            ? "Booked " + string.Join(", ", item.Bookings.Select(b => $"{b.StartTime:HH:mm} to {b.EndTime:HH:mm}")) + "."
+            : "Free all day.";
+        var summary = item.Bookings.Count == 0 ? "Free all day"
+            : item.Bookings.Count == 1 ? "1 booking"
+            : $"{item.Bookings.Count} bookings";
+
+        <li class="room-row">
+            <div>
+                <a asp-controller="Room" asp-action="Details" asp-route-id="@room.Id" class="room-number room-link" aria-label="Room @room.RoomNumber">@room.RoomNumber</a>
+                <span class="room-meta">@room.Building?.Name</span>
+                <div class="room-tags">
+                    <span class="room-tag room-tag-capacity">
+                        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                            <circle cx="8" cy="5" r="3" fill="currentColor" />
+                            <path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" fill="currentColor" />
+                        </svg>
+                        @room.Capacity @(room.Capacity == 1 ? "seat" : "seats")
+                    </span>
+                    @if (room.RoomFacilities != null)
+                    {
+                        @foreach (var rf in room.RoomFacilities)
+                        {
+                            <span class="room-tag">@rf.Facility?.Name</span>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="availability">
+                <div class="availability-track">
+                    @foreach (var booking in item.Bookings)
+                    {
+                        var start = booking.StartTime.TimeOfDay;
+                        var end = booking.EndTime.TimeOfDay;
+                        <span class="availability-booked"
+                              style="left: @HomeViewModel.PercentOfDay(start)%; width: @HomeViewModel.WidthOfSpan(start, end)%"
+                              title="Booked @booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")"></span>
+                    }
+                    @if (Model.HasTime)
+                    {
+                        var selectedStart = TimeSpan.Parse(Model.FromTime!, culture);
+                        var selectedEnd = TimeSpan.Parse(Model.ToTime!, culture);
+                        <span class="availability-selected"
+                              style="left: @HomeViewModel.PercentOfDay(selectedStart)%; width: @HomeViewModel.WidthOfSpan(selectedStart, selectedEnd)%"></span>
+                    }
+                </div>
+                <div class="availability-scale" aria-hidden="true">
+                    @foreach (var hour in hourMarks)
+                    {
+                        <span style="left: @HomeViewModel.PercentOfDay(TimeSpan.FromHours(hour))%">@hour.ToString("00")</span>
+                    }
+                </div>
+                <p class="visually-hidden">@description</p>
+            </div>
+
+            <span class="status-cell">
+                @if (Model.HasTime)
+                {
+                    if (item.IsFree)
+                    {
+                        <span class="status status-free">Available</span>
+                    }
+                    else
+                    {
+                        <span class="status status-busy">Booked</span>
+                    }
+                }
+                else
+                {
+                    <span class="status-summary">@summary</span>
+                }
+            </span>
+
+            <a asp-controller="Booking" asp-action="Create" asp-route-roomId="@room.Id" asp-route-date="@dateValue"
+               asp-route-from="@(Model.HasTime ? Model.FromTime : null)" asp-route-to="@(Model.HasTime ? Model.ToTime : null)"
+               class="btn btn-sm btn-primary">Book</a>
+        </li>
+    }
+</ul>

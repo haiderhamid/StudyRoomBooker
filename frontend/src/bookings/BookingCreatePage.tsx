@@ -18,7 +18,7 @@ export default function BookingCreatePage() {
   });
 
   return (
-    <div className="form-shell">
+    <div className="booking-page">
       <header className="page-header">
         <h1 className="page-title">Book a room</h1>
         <p className="page-subtitle">Choose a room, a day and a time.</p>

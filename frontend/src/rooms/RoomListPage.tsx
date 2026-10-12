@@ -16,7 +16,7 @@ export default function RoomListPage() {
   const [minCapacity, setMinCapacity] = useState<string>('');
   const [facilityIds, setFacilityIds] = useState<number[]>([]);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
 
   const { data: rooms = [], isLoading, error } = useQuery<Room[], Error>({
     queryKey: ['rooms', buildingId, minCapacity],
@@ -70,7 +70,7 @@ export default function RoomListPage() {
           <h1 className="page-title">Rooms</h1>
           <p className="page-subtitle">Every study room on campus, with seats and equipment.</p>
         </div>
-        {user && (
+        {isAdmin && (
           <Link to="/rooms/create" className="btn btn-primary">Add room</Link>
         )}
       </header>
@@ -152,15 +152,13 @@ export default function RoomListPage() {
         <p className="empty-state">No rooms match your search. Try fewer filters.</p>
       )}
 
-      <ul className="item-rows">
+      <ul className="room-grid">
         {matchingRooms.map(room => (
-          <li key={room.id} className="item-row">
-            <div className="item-main">
-              <span className="item-title">Room {room.roomNumber}</span>
-              <span className="item-meta">{room.buildingName}</span>
-              <RoomTags room={room} />
-            </div>
-            {user && (
+          <li key={room.id} className="room-card">
+            <Link to={`/rooms/${room.id}`} className="room-number stretched-link" aria-label={`Room ${room.roomNumber}`}>{room.roomNumber}</Link>
+            <span className="item-meta">{room.buildingName}</span>
+            <RoomTags room={room} />
+            {isAdmin && (
               <div className="item-actions">
                 <Link to={`/rooms/update/${room.id}`} className="btn btn-sm btn-quiet">Edit</Link>
                 <button type="button" className="btn btn-sm btn-quiet btn-quiet-danger" onClick={() => handleDelete(room)}>

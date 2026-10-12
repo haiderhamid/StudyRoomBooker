@@ -1,9 +1,9 @@
 import type { Booking } from '../types/booking';
 
 const DAY_START = 7 * 60;
-const DAY_END = 22 * 60;
+const DAY_END = 20 * 60;
 const DAY_LENGTH = DAY_END - DAY_START;
-const HOUR_MARKS = [7, 10, 13, 16, 19, 22];
+const HOUR_MARKS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
 interface AvailabilityBarProps {
   bookings: Booking[];

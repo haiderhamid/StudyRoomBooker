@@ -1,35 +1,43 @@
 @model Building
+@{
+    ViewData["Title"] = "Delete building";
+    var hasRooms = Model.Rooms != null && Model.Rooms.Any();
+}
 
-<h1 class="mb-4">Delete Building</h1>
+<div class="form-shell form-shell-narrow">
+    <header class="page-header">
+        <h1 class="page-title">Delete building?</h1>
+        <p class="page-subtitle">@(hasRooms ? "This building cannot be deleted right now." : "This cannot be undone.")</p>
+    </header>
 
-<div class="card shadow-sm" style="max-width: 500px;">
-    <div class="card-body">
-        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    <div class="card">
+        <div class="card-body">
+            <div asp-validation-summary="All" class="text-danger"></div>
 
-        <dl class="row">
-            <dt class="col-sm-4">Name</dt>
-            <dd class="col-sm-8">@Model.Name</dd>
+            <dl class="detail-list">
+                <dt>Name</dt>
+                <dd>@Model.Name</dd>
+                <dt>Address</dt>
+                <dd>@Model.Address</dd>
+                <dt>Rooms</dt>
+                <dd>@(Model.Rooms?.Count ?? 0)</dd>
+            </dl>
 
-            <dt class="col-sm-4">Address</dt>
-            <dd class="col-sm-8">@Model.Address</dd>
-
-            <dt class="col-sm-4">Rooms</dt>
-            <dd class="col-sm-8">@(Model.Rooms?.Count ?? 0)</dd>
-        </dl>
-
-        @if (Model.Rooms != null && Model.Rooms.Any())
-        {
-            <div class="alert alert-warning">This building has rooms and cannot be deleted.</div>
-            <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
-        }
-        else
-        {
-            <p class="text-danger">Are you sure you want to delete this building?</p>
-            <form asp-action="Delete" method="post">
-                <input type="hidden" asp-for="Id" />
-                <button type="submit" class="btn btn-danger">Delete</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-            </form>
-        }
+            @if (hasRooms)
+            {
+                <p class="notice">This building has rooms. Delete or move the rooms first.</p>
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Back to buildings</a>
+                </div>
+            }
+            else
+            {
+                <form asp-action="Delete" method="post" class="form-actions">
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" class="btn btn-danger">Delete building</button>
+                    <a asp-action="Index" class="btn btn-quiet">Cancel</a>
+                </form>
+            }
+        </div>
     </div>
 </div>

@@ -50,7 +50,7 @@ public class BuildingAPIController : ControllerBase
         return Ok(ToDto(building));
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost("create")]
     public async Task<IActionResult> Create([FromBody] BuildingDto buildingDto)
     {
@@ -76,7 +76,7 @@ public class BuildingAPIController : ControllerBase
         return StatusCode(500, "Internal server error");
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPut("update/{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] BuildingDto buildingDto)
     {
@@ -103,7 +103,7 @@ public class BuildingAPIController : ControllerBase
         return StatusCode(500, "Internal server error");
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

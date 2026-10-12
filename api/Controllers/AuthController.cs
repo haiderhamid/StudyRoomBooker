@@ -32,6 +32,7 @@ public class AuthController : ControllerBase
 
         if (result.Succeeded)
         {
+            await _userManager.AddToRoleAsync(user, "Student");
             _logger.LogInformation("[AuthController] User {Username} registered successfully.", registerDto.Username);
             return Ok(new { Message = "User registered successfully" });
         }
@@ -52,7 +53,7 @@ public class AuthController : ControllerBase
         if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
         {
             _logger.LogInformation("[AuthController] User {Username} logged in.", loginDto.Username);
-            var token = GenerateJwtToken(user);
+            var token = await GenerateJwtToken(user);
             return Ok(new { Token = token });
         }
 
@@ -69,7 +70,7 @@ public class AuthController : ControllerBase
         return Ok(new { Message = "Logout successful" });
     }
 
-    private string GenerateJwtToken(AuthUser user)
+    private async Task<string> GenerateJwtToken(AuthUser user)
     {
         var jwtKey = _configuration["Jwt:Key"];
         if (string.IsNullOrEmpty(jwtKey))
@@ -81,13 +82,17 @@ public class AuthController : ControllerBase
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        var roles = await _userManager.GetRolesAsync(user);
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"],

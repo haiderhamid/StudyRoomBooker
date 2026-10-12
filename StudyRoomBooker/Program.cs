@@ -15,6 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDefaultIdentity<IdentityUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
@@ -28,6 +29,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
 var app = builder.Build();
@@ -124,11 +126,28 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var roleName in new[] { "Admin", "Student" })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    if (await userManager.FindByEmailAsync("admin@oslomet.no") == null)
+    {
+        var adminUser = new IdentityUser { UserName = "admin@oslomet.no", Email = "admin@oslomet.no" };
+        await userManager.CreateAsync(adminUser, "Admin123!");
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+
     if (await userManager.FindByEmailAsync("test@oslomet.no") == null)
     {
         var testUser = new IdentityUser { UserName = "test@oslomet.no", Email = "test@oslomet.no" };
         await userManager.CreateAsync(testUser, "Test123!");
+        await userManager.AddToRoleAsync(testUser, "Student");
     }
 }
 
@@ -139,7 +158,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+
 app.UseHttpsRedirection();
+app.UseRequestLocalization("en-GB");
 app.UseRouting();
 
 app.UseSession();

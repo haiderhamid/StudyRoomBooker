@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "No access";
+}
+
+<div class="form-shell form-shell-narrow">
+    <header class="page-header">
+        <h1 class="page-title">No access</h1>
+        <p class="page-subtitle">You do not have permission to do this.</p>
+    </header>
+
+    <div class="card">
+        <div class="card-body">
+            <p class="mb-0">Only administrators can manage rooms and buildings, and you can only change your own bookings.</p>
+            <div class="form-actions">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Find a room</a>
+                <a asp-controller="Booking" asp-action="Index" class="btn btn-quiet">My bookings</a>
+            </div>
+        </div>
+    </div>
+</div>

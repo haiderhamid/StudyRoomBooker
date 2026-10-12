@@ -21,7 +21,6 @@ public class BookingDto
     [Required]
     public DateTime EndTime { get; set; }
 
-    [Required(ErrorMessage = "Please enter who booked the room.")]
     [StringLength(100)]
     public string BookedBy { get; set; } = string.Empty;
 }

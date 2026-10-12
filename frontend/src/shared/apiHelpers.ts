@@ -20,6 +20,13 @@ export async function handleResponse<T>(response: Response): Promise<T> {
     return response.json() as Promise<T>;
   }
 
+  if (response.status === 401) {
+    throw new Error('You must be logged in to do this. Please log in again.');
+  }
+  if (response.status === 403) {
+    throw new Error('You do not have permission to do this.');
+  }
+
   const contentType = response.headers.get('content-type') ?? '';
   if (contentType.includes('json')) {
     const problem = await response.json();
@@ -32,9 +39,6 @@ export async function handleResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
   if (text) {
     throw new Error(text);
-  }
-  if (response.status === 401) {
-    throw new Error('You must be logged in to do this. Please log in again.');
   }
   throw new Error(`Request failed with status ${response.status}`);
 }

@@ -1,37 +1,70 @@
 @model List<Booking>
+@{
+    ViewData["Title"] = "My bookings";
+    var showPast = Context.Request.Query["view"] == "past";
+    var today = DateTime.Today;
+    var now = DateTime.Now;
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>All Bookings</h1>
-    <a asp-action="Create" class="btn btn-primary">+ New Booking</a>
-</div>
+    var visibleBookings = showPast
+        ? Model.Where(b => b.EndTime <= now).OrderByDescending(b => b.StartTime)
+        : Model.Where(b => b.EndTime > now).OrderBy(b => b.StartTime);
 
-<div class="table-responsive shadow-sm rounded">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-dark">
-            <tr>
-                <th>Room</th>
-                <th>Subject</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Booked By</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var booking in Model)
+    var days = visibleBookings.GroupBy(b => b.StartTime.Date);
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
+}
+
+<header class="page-header">
+    <div>
+        <h1 class="page-title">My bookings</h1>
+        <p class="page-subtitle">The study rooms you have booked.</p>
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Book a room</a>
+</header>
+
+<nav class="segmented" aria-label="Show bookings">
+    <a asp-action="Index" class="@(showPast ? "" : "is-active")" aria-current="@(showPast ? null : "page")">Upcoming</a>
+    <a asp-action="Index" asp-route-view="past" class="@(showPast ? "is-active" : "")" aria-current="@(showPast ? "page" : null)">Past</a>
+</nav>
+
+@if (!days.Any())
+{
+    <div class="empty-state">
+        <p>@(showPast ? "You have no past bookings." : "You have no upcoming bookings.")</p>
+        @if (!showPast)
+        {
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Find a room</a>
+        }
+    </div>
+}
+
+@foreach (var day in days)
+{
+    var heading = day.Key == today ? "Today"
+        : day.Key == today.AddDays(1) ? "Tomorrow"
+        : day.Key.ToString("dddd d MMMM", culture);
+
+    <section class="day-group">
+        <h2 class="day-heading">@heading</h2>
+        <ul class="item-rows">
+            @foreach (var booking in day)
             {
-                <tr>
-                    <td>@booking.Room?.RoomNumber (@booking.Room?.Building?.Name)</td>
-                    <td>@booking.Subject</td>
-                    <td>@booking.StartTime.ToString("g")</td>
-                    <td>@booking.EndTime.ToString("g")</td>
-                    <td>@booking.BookedBy</td>
-                    <td class="text-end">
-                        <a asp-action="Edit" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@booking.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                    </td>
-                </tr>
+                <li class="item-row">
+                    <span class="booking-time">@booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")</span>
+                    <div class="item-main">
+                        <span class="item-title">@booking.Subject</span>
+                        <span class="item-meta">
+                            <a asp-controller="Room" asp-action="Details" asp-route-id="@booking.RoomId">Room @booking.Room?.RoomNumber</a> · @booking.Room?.Building?.Name
+                        </span>
+                    </div>
+                    @if (booking.StartTime > now)
+                    {
+                        <div class="item-actions">
+                            <a asp-action="Edit" asp-route-id="@booking.Id" class="btn btn-sm btn-quiet">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@booking.Id" class="btn btn-sm btn-quiet btn-quiet-danger">Delete</a>
+                        </div>
+                    }
+                </li>
             }
-        </tbody>
-    </table>
-</div>
+        </ul>
+    </section>
+}

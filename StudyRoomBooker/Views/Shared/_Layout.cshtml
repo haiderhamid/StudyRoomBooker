@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,52 +11,59 @@
     <link rel="stylesheet" href="~/StudyRoomBooker.styles.css" asp-append-version="true" />
 </head>
 
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">StudyRoomBooker</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Room" asp-action="Index">Rooms</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Booking"
-                               asp-action="Index">Bookings</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Building"
-                               asp-action="Index">Buildings</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home"
-                               asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var isAdmin = User.IsInRole("Admin");
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
+}
 
-    <footer class="border-top footer text-muted">
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-md sticky-top srb-navbar">
         <div class="container">
-            &copy; 2026 - StudyRoomBooker - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">StudyRoomBooker</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav"
+                    aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="main-nav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link @(controller == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">Find a room</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(controller == "Room" ? "active" : "")" asp-controller="Room" asp-action="Index">Rooms</a>
+                    </li>
+                    @if (isSignedIn)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(controller == "Booking" ? "active" : "")" asp-controller="Booking" asp-action="Index">My bookings</a>
+                        </li>
+                    }
+                    @if (isAdmin)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(controller == "Building" ? "active" : "")" asp-controller="Building" asp-action="Index">Buildings</a>
+                        </li>
+                    }
+                </ul>
+                <partial name="_LoginPartial" />
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow-1">
+        <div class="container py-4">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="srb-footer">
+        <div class="container py-3 d-flex flex-wrap justify-content-between gap-2">
+            <span>StudyRoomBooker, a student project for ITPE3200 · <a asp-controller="Home" asp-action="Privacy">Privacy</a></span>
+            <span>Rooms can be booked from 07:00 to 20:00 in 15-minute slots.</span>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

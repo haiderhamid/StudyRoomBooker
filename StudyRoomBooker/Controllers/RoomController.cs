@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
@@ -21,14 +22,18 @@ public class RoomController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(int? buildingId, int? minCapacity, int? facilityId)
+    public async Task<IActionResult> Index(int? buildingId, int? minCapacity, List<int>? facilityIds)
     {
-        var rooms = await _roomRepository.Search(buildingId, minCapacity, facilityId);
+        var selectedFacilityIds = facilityIds ?? new List<int>();
+        var rooms = await _roomRepository.Search(buildingId, minCapacity, null);
         if (rooms == null)
         {
             _logger.LogError("[RoomController] Room list not found while executing Search().");
             rooms = new List<Room>();
         }
+
+        rooms = rooms.Where(r => selectedFacilityIds.All(id =>
+            r.RoomFacilities != null && r.RoomFacilities.Any(rf => rf.FacilityId == id)));
 
         var buildings = await _buildingRepository.GetAll() ?? new List<Building>();
         var facilities = await _facilityRepository.GetAll() ?? new List<Facility>();
@@ -38,7 +43,7 @@ public class RoomController : Controller
             Rooms = rooms.ToList(),
             BuildingId = buildingId,
             MinCapacity = minCapacity,
-            FacilityId = facilityId,
+            FacilityIds = selectedFacilityIds,
             BuildingSelectList = buildings.Select(b => new SelectListItem
             {
                 Value = b.Id.ToString(),
@@ -51,6 +56,69 @@ public class RoomController : Controller
             }).ToList()
         };
         return View(viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(int id, DateTime? week)
+    {
+        var room = await _roomRepository.GetRoomById(id);
+        if (room == null)
+        {
+            _logger.LogWarning("[RoomController] Room with Id {Id} not found.", id);
+            return NotFound();
+        }
+
+        var viewModel = new RoomDetailsViewModel
+        {
+            Room = room,
+            Schedule = await BuildSchedule(id, StartOfWeek(week ?? DateTime.Today), null)
+        };
+        return View(viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Schedule(int id, DateTime? week, DateTime? date, string? from, string? to, int? excludeBookingId)
+    {
+        var weekStart = StartOfWeek(week ?? date ?? DateTime.Today);
+        var schedule = await BuildSchedule(id, weekStart, excludeBookingId);
+
+        if (date.HasValue &&
+            TimeSpan.TryParse(from, CultureInfo.InvariantCulture, out var fromTime) &&
+            TimeSpan.TryParse(to, CultureInfo.InvariantCulture, out var toTime) &&
+            toTime > fromTime)
+        {
+            schedule.SelectedStart = date.Value.Date.Add(fromTime);
+            schedule.SelectedEnd = date.Value.Date.Add(toTime);
+        }
+
+        return PartialView("_WeekSchedule", schedule);
+    }
+
+    private async Task<WeekScheduleViewModel> BuildSchedule(int roomId, DateTime weekStart, int? excludeBookingId)
+    {
+        var bookings = await _bookingRepository.GetAll();
+        if (bookings == null)
+        {
+            _logger.LogError("[RoomController] Booking list not found while executing GetAll().");
+            bookings = new List<Booking>();
+        }
+
+        return new WeekScheduleViewModel
+        {
+            RoomId = roomId,
+            WeekStart = weekStart,
+            Bookings = bookings
+                .Where(b => b.RoomId == roomId && b.Id != excludeBookingId &&
+                            b.StartTime >= weekStart && b.StartTime < weekStart.AddDays(7))
+                .OrderBy(b => b.StartTime)
+                .ToList()
+        };
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var daysSinceMonday = ((int)date.DayOfWeek + 6) % 7;
+        return date.Date.AddDays(-daysSinceMonday);
     }
 
     private async Task FillSelectLists(RoomViewModel viewModel)
@@ -66,7 +134,7 @@ public class RoomController : Controller
         viewModel.AllFacilities = facilities.ToList();
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Create()
     {
@@ -75,8 +143,9 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(RoomViewModel viewModel)
     {
         var room = viewModel.Room;
@@ -100,7 +169,7 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -120,8 +189,9 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, RoomViewModel viewModel)
     {
         var room = viewModel.Room;
@@ -150,7 +220,7 @@ public class RoomController : Controller
         return View(viewModel);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
@@ -165,8 +235,9 @@ public class RoomController : Controller
         return View(room);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         if (await _bookingRepository.HasBookingsForRoom(id))

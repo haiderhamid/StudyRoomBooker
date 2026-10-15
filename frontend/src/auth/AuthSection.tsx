@@ -1,6 +1,6 @@
 import { Nav, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 
 export default function AuthSection() {
   const { user, logout } = useAuth();

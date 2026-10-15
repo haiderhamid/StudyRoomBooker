@@ -6,7 +6,7 @@ import type { Room } from '../types/room';
 import type { Booking } from '../types/booking';
 import * as RoomService from './RoomService';
 import * as BookingService from '../bookings/BookingService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { addDays, startOfWeek, toDateString } from '../shared/dateTime';
 import RoomTags from '../shared/RoomTags';
 import WeekSchedule from './WeekSchedule';
@@ -22,7 +22,7 @@ export default function RoomDetailsPage() {
     enabled: !!roomId,
   });
 
-  const { data: bookings = [] } = useQuery<Booking[], Error>({
+  const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery<Booking[], Error>({
     queryKey: ['bookings', user?.sub ?? ''],
     queryFn: BookingService.fetchBookings,
   });
@@ -70,15 +70,27 @@ export default function RoomDetailsPage() {
         </div>
       </header>
 
-      <WeekSchedule
-        bookings={weekBookings}
-        weekStart={weekStart}
-        onPreviousWeek={() => setWeekStart(addDays(weekStart, -7))}
-        onNextWeek={() => setWeekStart(addDays(weekStart, 7))}
-        onThisWeek={() => setWeekStart(startOfWeek(new Date()))}
-        isMine={isMine}
-        canManage={canManage}
-      />
+      {bookingsLoading && (
+        <Spinner animation="border" role="status" className="my-4">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+      )}
+
+      {bookingsError && (
+        <Alert variant="danger">Could not load the schedule: {bookingsError.message}</Alert>
+      )}
+
+      {!bookingsLoading && !bookingsError && (
+        <WeekSchedule
+          bookings={weekBookings}
+          weekStart={weekStart}
+          onPreviousWeek={() => setWeekStart(addDays(weekStart, -7))}
+          onNextWeek={() => setWeekStart(addDays(weekStart, 7))}
+          onThisWeek={() => setWeekStart(startOfWeek(new Date()))}
+          isMine={isMine}
+          canManage={canManage}
+        />
+      )}
     </>
   );
 }

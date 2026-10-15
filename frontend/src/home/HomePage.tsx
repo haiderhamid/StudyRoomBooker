@@ -38,7 +38,7 @@ export default function HomePage() {
     queryFn: FacilityService.fetchFacilities,
   });
 
-  const { data: bookings = [] } = useQuery<Booking[], Error>({
+  const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery<Booking[], Error>({
     queryKey: ['bookings'],
     queryFn: BookingService.fetchBookings,
   });
@@ -208,7 +208,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {isLoading && (
+      {(isLoading || bookingsLoading) && (
         <Spinner animation="border" role="status" className="my-4">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
@@ -216,34 +216,40 @@ export default function HomePage() {
 
       {error && <Alert variant="danger">Could not load rooms: {error.message}</Alert>}
 
+      {bookingsError && (
+        <Alert variant="danger">Could not load bookings, so availability cannot be shown: {bookingsError.message}</Alert>
+      )}
+
       {!isLoading && !error && matchingRooms.length === 0 && (
         <Alert variant="light">No rooms match your search. Try fewer filters.</Alert>
       )}
 
-      <ul className="room-rows">
-        {sortedRooms.map(room => (
-          <li key={room.id} className="room-row">
-            <div>
-              <Link to={`/rooms/${room.id}`} className="room-number room-link" aria-label={`Room ${room.roomNumber}`}>{room.roomNumber}</Link>
-              <span className="room-meta">{room.buildingName}</span>
-              <RoomTags room={room} />
-            </div>
-            <AvailabilityBar
-              bookings={bookingsOnDate.filter(b => b.roomId === room.id)}
-              selectedFrom={hasTime ? fromTime : undefined}
-              selectedTo={hasTime ? toTime : undefined}
-            />
-            <span className="status-cell">
-              {hasTime
-                ? (isFree(room.id)
-                  ? <span className="status status-free">Available</span>
-                  : <span className="status status-busy">Booked</span>)
-                : <span className="status-summary">{bookingSummary(room.id)}</span>}
-            </span>
-            <Link to={bookLink(room.id)} className="btn btn-sm btn-primary">Book</Link>
-          </li>
-        ))}
-      </ul>
+      {!bookingsLoading && !bookingsError && (
+        <ul className="room-rows">
+          {sortedRooms.map(room => (
+            <li key={room.id} className="room-row">
+              <div>
+                <Link to={`/rooms/${room.id}`} className="room-number room-link" aria-label={`Room ${room.roomNumber}`}>{room.roomNumber}</Link>
+                <span className="room-meta">{room.buildingName}</span>
+                <RoomTags room={room} />
+              </div>
+              <AvailabilityBar
+                bookings={bookingsOnDate.filter(b => b.roomId === room.id)}
+                selectedFrom={hasTime ? fromTime : undefined}
+                selectedTo={hasTime ? toTime : undefined}
+              />
+              <span className="status-cell">
+                {hasTime
+                  ? (isFree(room.id)
+                    ? <span className="status status-free">Available</span>
+                    : <span className="status status-busy">Booked</span>)
+                  : <span className="status-summary">{bookingSummary(room.id)}</span>}
+              </span>
+              <Link to={bookLink(room.id)} className="btn btn-sm btn-primary">Book</Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

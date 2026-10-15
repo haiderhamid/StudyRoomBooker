@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Form, Button, Alert, Card, Spinner } from 'react-bootstrap';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 
 export default function LoginPage() {
   const [username, setUsername] = useState<string>('');

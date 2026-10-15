@@ -94,6 +94,12 @@ public class RoomAPIController : ControllerBase
             return BadRequest("Room data cannot be null");
         }
 
+        if (await _roomRepository.GetRoomById(id) == null)
+        {
+            _logger.LogWarning("[RoomAPIController] Room with Id {Id} not found for update.", id);
+            return NotFound("Room not found");
+        }
+
         var room = new Room
         {
             Id = id,
@@ -120,6 +126,12 @@ public class RoomAPIController : ControllerBase
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        if (await _roomRepository.GetRoomById(id) == null)
+        {
+            _logger.LogWarning("[RoomAPIController] Room with Id {Id} not found for deletion.", id);
+            return NotFound("Room not found");
+        }
+
         if (await _bookingRepository.HasBookingsForRoom(id))
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} was not deleted because it has bookings.", id);

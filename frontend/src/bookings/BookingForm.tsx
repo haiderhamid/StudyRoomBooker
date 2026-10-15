@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import type { Booking } from '../types/booking';
 import type { Room } from '../types/room';
 import * as BookingService from './BookingService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import WeekSchedule from '../rooms/WeekSchedule';
 import * as RoomService from '../rooms/RoomService';
 import { addDays, startOfWeek, timeOptions, toDateString, todayString } from '../shared/dateTime';
@@ -57,7 +57,7 @@ export default function BookingForm({
     queryFn: () => RoomService.fetchRooms({ buildingId: '', minCapacity: '', facilityId: '' }),
   });
 
-  const { data: bookings = [] } = useQuery<Booking[], Error>({
+  const { data: bookings = [], error: bookingsError } = useQuery<Booking[], Error>({
     queryKey: ['bookings', user?.sub ?? ''],
     queryFn: BookingService.fetchBookings,
   });
@@ -208,7 +208,10 @@ export default function BookingForm({
       </Card>
 
       <div className="booking-schedule">
-        {roomId ? (
+        {bookingsError && (
+          <Alert variant="danger">Could not load the schedule: {bookingsError.message}</Alert>
+        )}
+        {!bookingsError && roomId && (
           <WeekSchedule
             bookings={roomBookings}
             weekStart={weekStart}
@@ -219,7 +222,8 @@ export default function BookingForm({
             canManage={booking => isAdmin || isMine(booking)}
             selection={selection}
           />
-        ) : (
+        )}
+        {!bookingsError && !roomId && (
           <p className="empty-state">Choose a room to see when it is free.</p>
         )}
       </div>

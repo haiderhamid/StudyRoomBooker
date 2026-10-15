@@ -85,6 +85,12 @@ public class BuildingAPIController : ControllerBase
             return BadRequest("Building data cannot be null");
         }
 
+        if (await _buildingRepository.GetBuildingById(id) == null)
+        {
+            _logger.LogWarning("[BuildingAPIController] Building with Id {Id} not found for update.", id);
+            return NotFound("Building not found");
+        }
+
         var building = new Building
         {
             Id = id,

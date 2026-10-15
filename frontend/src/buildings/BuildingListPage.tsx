@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Spinner, Alert } from 'react-bootstrap';
 import type { Building } from '../types/building';
 import * as BuildingService from './BuildingService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 
 export default function BuildingListPage() {
   const queryClient = useQueryClient();

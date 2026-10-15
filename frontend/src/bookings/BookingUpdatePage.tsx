@@ -4,7 +4,7 @@ import { Spinner, Alert } from 'react-bootstrap';
 import BookingForm from './BookingForm';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 
 export default function BookingUpdatePage() {
   const { bookingId } = useParams<{ bookingId: string }>();

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Spinner, Alert } from 'react-bootstrap';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import { todayString, toDateString } from '../shared/dateTime';
 
 type View = 'upcoming' | 'past';

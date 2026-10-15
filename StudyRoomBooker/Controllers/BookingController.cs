@@ -61,6 +61,11 @@ public class BookingController : Controller
         return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
+    private bool HasStarted(Booking booking)
+    {
+        return booking.StartTime <= DateTime.Now && !User.IsInRole("Admin");
+    }
+
     private void ValidateTimes(Booking booking)
     {
         if (booking.EndTime <= booking.StartTime)
@@ -262,6 +267,8 @@ public class BookingController : Controller
         {
             return Forbid();
         }
+
+        ViewBag.HasStarted = HasStarted(booking);
         return View(booking);
     }
 
@@ -280,6 +287,13 @@ public class BookingController : Controller
         if (!CanManage(booking))
         {
             return Forbid();
+        }
+
+        if (HasStarted(booking))
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} was not deleted because it has started.", id);
+            ViewBag.HasStarted = true;
+            return View("Delete", booking);
         }
 
         bool deleted = await _bookingRepository.Delete(id);

@@ -8,7 +8,7 @@ import type { Facility } from '../types/facility';
 import * as RoomService from './RoomService';
 import * as BuildingService from '../buildings/BuildingService';
 import * as FacilityService from '../facilities/FacilityService';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/useAuth';
 import RoomTags from '../shared/RoomTags';
 
 export default function RoomListPage() {

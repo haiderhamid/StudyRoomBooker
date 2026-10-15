@@ -215,6 +215,12 @@ public class BookingAPIController : ControllerBase
             return Forbid();
         }
 
+        if (booking.StartTime <= DateTime.Now && !User.IsInRole("Admin"))
+        {
+            _logger.LogWarning("[BookingAPIController] Booking with Id {Id} was not deleted because it has started.", id);
+            return BadRequest("A booking that has already started cannot be deleted.");
+        }
+
         bool returnOk = await _bookingRepository.Delete(id);
         if (!returnOk)
         {

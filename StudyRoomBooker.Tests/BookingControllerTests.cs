@@ -252,6 +252,22 @@ public class BookingControllerTests
     }
 
     [Fact]
+    public async Task DeleteConfirmed_StartedBooking_ReturnsDeleteView()
+    {
+        var booking = CreateBooking(1, "test@oslomet.no");
+        booking.StartTime = DateTime.Now.AddHours(-1);
+        booking.EndTime = DateTime.Now.AddHours(1);
+        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(booking);
+        var controller = CreateController();
+
+        var result = await controller.DeleteConfirmed(1);
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("Delete", viewResult.ViewName);
+        _bookingRepositoryMock.Verify(r => r.Delete(It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
     public async Task DeleteConfirmed_AdminDeletesOtherUsersBooking_RedirectsToIndex()
     {
         _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "kari@oslomet.no"));

@@ -27,11 +27,21 @@
                 }
             </dl>
 
-            <form asp-action="Delete" method="post" class="form-actions">
-                <input type="hidden" asp-for="Id" />
-                <button type="submit" class="btn btn-danger">Delete booking</button>
-                <a asp-action="Index" class="btn btn-quiet">Cancel</a>
-            </form>
+            @if (ViewBag.HasStarted == true)
+            {
+                <p class="notice">This booking has already started and cannot be deleted.</p>
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Back to my bookings</a>
+                </div>
+            }
+            else
+            {
+                <form asp-action="Delete" method="post" class="form-actions">
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" class="btn btn-danger">Delete booking</button>
+                    <a asp-action="Index" class="btn btn-quiet">Cancel</a>
+                </form>
+            }
         </div>
     </div>
 </div>

@@ -33,6 +33,7 @@ public class RoomRepository : IRoomRepository
         try
         {
             return await _context.Rooms
+                .AsNoTracking()
                 .Include(r => r.Building)
                 .Include(r => r.RoomFacilities!)
                     .ThenInclude(rf => rf.Facility)

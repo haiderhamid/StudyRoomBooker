@@ -31,6 +31,7 @@ public class BuildingRepository : IBuildingRepository
         try
         {
             return await _context.Buildings
+                .AsNoTracking()
                 .Include(b => b.Rooms)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }

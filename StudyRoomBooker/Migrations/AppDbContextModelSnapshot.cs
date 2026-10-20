@@ -48,6 +48,28 @@ namespace StudyRoomBooker.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("BookingParticipant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BookingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId", "UserName")
+                        .IsUnique();
+
+                    b.ToTable("BookingParticipants");
+                });
+
             modelBuilder.Entity("Building", b =>
                 {
                     b.Property<int>("Id")
@@ -337,6 +359,17 @@ namespace StudyRoomBooker.Migrations
                     b.Navigation("Room");
                 });
 
+            modelBuilder.Entity("BookingParticipant", b =>
+                {
+                    b.HasOne("Booking", "Booking")
+                        .WithMany("Participants")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -416,6 +449,11 @@ namespace StudyRoomBooker.Migrations
                     b.Navigation("Facility");
 
                     b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Booking", b =>
+                {
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("Building", b =>

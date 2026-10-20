@@ -16,18 +16,18 @@
             <form asp-action="Edit" method="post">
                 <input type="hidden" asp-for="Room.Id" />
                 <div class="mb-3">
-                    <label asp-for="Room.RoomNumber" class="form-label">Room number</label>
+                    <label asp-for="Room.RoomNumber" class="form-label required">Room number</label>
                     <input asp-for="Room.RoomNumber" class="form-control" />
                     <span asp-validation-for="Room.RoomNumber" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Room.BuildingId" class="form-label">Building</label>
+                    <label asp-for="Room.BuildingId" class="form-label required">Building</label>
                     <select asp-for="Room.BuildingId" asp-items="Model.BuildingSelectList" class="form-select">
                     </select>
                     <span asp-validation-for="Room.BuildingId" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Room.Capacity" class="form-label">Seats</label>
+                    <label asp-for="Room.Capacity" class="form-label required">Seats</label>
                     <input asp-for="Room.Capacity" class="form-control" />
                     <span asp-validation-for="Room.Capacity" class="text-danger"></span>
                 </div>

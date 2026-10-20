@@ -1185,3 +1185,19 @@ a.schedule-booking.is-mine:hover {
 .text-danger {
   color: var(--srb-busy) !important;
 }
+
+/* Adds a red star after the label of fields that must be filled in. */
+.form-label.required::after {
+  content: " *";
+  color: var(--srb-busy);
+}
+
+/* When the chosen time clashes with a booking, only the red frame is shown,
+   so the text of the booking under it can still be read. */
+.schedule-selected.is-conflict {
+  background-color: transparent;
+}
+
+.schedule-selected.is-conflict span {
+  display: none;
+}

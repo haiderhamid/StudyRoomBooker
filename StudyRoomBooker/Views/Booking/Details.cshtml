@@ -8,7 +8,7 @@
     var hasEnded = Model.EndTime <= DateTime.Now;
 }
 
-<div class="form-shell form-shell-narrow">
+<div class="form-shell">
     <header class="page-header">
         <h1 class="page-title">@Model.Subject</h1>
         <p class="page-subtitle">@Model.SeatsTaken of @capacity seats taken</p>
@@ -78,7 +78,7 @@
                 }
                 else if (!canManage && !isJoined)
                 {
-                    <p class="notice">@joinError</p>
+                    <p class="notice mt-0">@joinError</p>
                 }
                 <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId" class="btn btn-quiet">Back to room</a>
             </div>

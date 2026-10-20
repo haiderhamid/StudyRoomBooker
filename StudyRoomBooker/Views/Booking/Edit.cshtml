@@ -16,13 +16,13 @@
             <form asp-action="Edit" method="post" data-booking-form>
                 <input type="hidden" asp-for="Booking.Id" />
                 <div class="mb-3">
-                    <label asp-for="Booking.RoomId" class="form-label">Room</label>
+                    <label asp-for="Booking.RoomId" class="form-label required">Room</label>
                     <select asp-for="Booking.RoomId" asp-items="Model.RoomSelectList" class="form-select">
                     </select>
                     <span asp-validation-for="Booking.RoomId" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="Booking.Subject" class="form-label">Subject</label>
+                    <label asp-for="Booking.Subject" class="form-label required">Subject</label>
                     <input asp-for="Booking.Subject" class="form-control" />
                     <span asp-validation-for="Booking.Subject" class="text-danger"></span>
                 </div>

@@ -28,7 +28,8 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("AuthDbContextConnection")));
 
 // Login with roles (Admin and Student). The error describer gives friendlier password messages.
-builder.Services.AddIdentity<AuthUser, IdentityRole>()
+// Each email can only be used once, so users can log in with their email as well.
+builder.Services.AddIdentity<AuthUser, IdentityRole>(options => options.User.RequireUniqueEmail = true)
     .AddEntityFrameworkStores<AuthDbContext>()
     .AddDefaultTokenProviders()
     .AddErrorDescriber<CustomIdentityErrorDescriber>();

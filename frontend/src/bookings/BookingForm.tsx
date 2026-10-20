@@ -135,7 +135,7 @@ export default function BookingForm({
 
           <Form noValidate onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="roomId">
-              <Form.Label>Room</Form.Label>
+              <Form.Label className="required">Room</Form.Label>
               <Form.Select
                 value={roomId}
                 onChange={e => setRoomId(e.target.value)}
@@ -150,7 +150,7 @@ export default function BookingForm({
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="subject">
-              <Form.Label>Subject</Form.Label>
+              <Form.Label className="required">Subject</Form.Label>
               <Form.Control
                 value={subject}
                 onChange={e => setSubject(e.target.value)}

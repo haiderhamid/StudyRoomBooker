@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Spinner, Alert } from 'react-bootstrap';
 import type { Booking } from '../types/booking';
@@ -9,6 +9,7 @@ import { useAuth } from '../auth/useAuth';
 export default function BookingDetailsPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isAdmin } = useAuth();
 
@@ -25,6 +26,13 @@ export default function BookingDetailsPage() {
   };
   const joinMutation = useMutation<void, Error, number>({ mutationFn: BookingService.joinBooking, onSuccess });
   const leaveMutation = useMutation<void, Error, number>({ mutationFn: BookingService.leaveBooking, onSuccess });
+  const deleteMutation = useMutation<void, Error, number>({
+    mutationFn: BookingService.deleteBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      navigate('/bookings');
+    },
+  });
 
   if (isLoading) {
     return (
@@ -48,7 +56,7 @@ export default function BookingDetailsPage() {
   const isOwner = !!user && booking.bookedBy === user.sub;
   const canManage = isAdmin || isOwner;
   const isFull = (booking.seatsTaken ?? 1) >= (booking.roomCapacity ?? 0);
-  const actionError = joinMutation.error ?? leaveMutation.error;
+  const actionError = joinMutation.error ?? leaveMutation.error ?? deleteMutation.error;
 
   const date = new Date(booking.startTime).toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -56,10 +64,22 @@ export default function BookingDetailsPage() {
     month: 'long',
   });
 
-  // Picks the right button for the user: edit your own, leave if joined, or join if there is room.
+  // Picks the right buttons for the user: edit or delete your own, leave if joined, or join if there is room.
   let actions: ReactNode;
   if (canManage && (isAdmin || !hasStarted) && !hasEnded) {
-    actions = <Link to={`/bookings/update/${booking.id}`} className="btn btn-primary">Edit</Link>;
+    actions = (
+      <>
+        <Link to={`/bookings/update/${booking.id}`} className="btn btn-primary">Edit</Link>
+        <button type="button" className="btn btn-quiet btn-quiet-danger" disabled={deleteMutation.isPending}
+          onClick={() => {
+            if (window.confirm(`Delete the booking "${booking.subject}"?`)) {
+              deleteMutation.mutate(booking.id);
+            }
+          }}>
+          Delete
+        </button>
+      </>
+    );
   } else if (hasEnded) {
     actions = <p className="notice">This booking has ended.</p>;
   } else if (isOwner) {
@@ -87,7 +107,7 @@ export default function BookingDetailsPage() {
   }
 
   return (
-    <div className="form-shell form-shell-narrow">
+    <div className="form-shell">
       <header className="page-header">
         <h1 className="page-title">{booking.subject}</h1>
         <p className="page-subtitle">{booking.seatsTaken} of {booking.roomCapacity} seats taken</p>

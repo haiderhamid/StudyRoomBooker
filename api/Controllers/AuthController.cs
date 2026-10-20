@@ -49,7 +49,9 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
-        var user = await _userManager.FindByNameAsync(loginDto.Username);
+        // Users can log in with either their username or their email.
+        var user = await _userManager.FindByNameAsync(loginDto.Username)
+            ?? await _userManager.FindByEmailAsync(loginDto.Username);
 
         if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
         {
@@ -59,7 +61,7 @@ public class AuthController : ControllerBase
         }
 
         _logger.LogWarning("[AuthController] Failed login attempt for {Username}.", loginDto.Username);
-        return Unauthorized("Invalid username or password.");
+        return Unauthorized("Wrong username/email or password. Please try again.");
     }
 
     // With JWT the real logout happens in React, by deleting the token.

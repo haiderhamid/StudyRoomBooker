@@ -7,6 +7,10 @@ export async function login(credentials: LoginDto): Promise<string> {
     headers,
     body: JSON.stringify(credentials),
   });
+  // 401 here means wrong login details, not that the user has to log in again.
+  if (response.status === 401) {
+    throw new Error('Wrong username/email or password. Please try again.');
+  }
   const data = await handleResponse<{ token: string }>(response);
   return data.token;
 }

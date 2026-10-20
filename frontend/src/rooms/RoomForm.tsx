@@ -89,7 +89,7 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
 
         <Form noValidate onSubmit={handleSubmit}>
           <Form.Group className="mb-3" controlId="roomNumber">
-            <Form.Label>Room number</Form.Label>
+            <Form.Label className="required">Room number</Form.Label>
             <Form.Control
               value={roomNumber}
               onChange={e => setRoomNumber(e.target.value)}
@@ -99,7 +99,7 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="buildingId">
-            <Form.Label>Building</Form.Label>
+            <Form.Label className="required">Building</Form.Label>
             <Form.Select
               value={buildingId}
               onChange={e => setBuildingId(e.target.value)}
@@ -114,7 +114,7 @@ export default function RoomForm({ initialValues, onSubmit, isSubmitting, submit
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="capacity">
-            <Form.Label>Seats</Form.Label>
+            <Form.Label className="required">Seats</Form.Label>
             <Form.Control
               type="number"
               min={1}

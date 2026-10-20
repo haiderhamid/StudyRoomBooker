@@ -59,7 +59,7 @@ export default function BuildingForm({ initialValues, onSubmit, isSubmitting, su
 
         <Form noValidate onSubmit={handleSubmit}>
           <Form.Group className="mb-3" controlId="name">
-            <Form.Label>Name</Form.Label>
+            <Form.Label className="required">Name</Form.Label>
             <Form.Control
               value={name}
               onChange={e => setName(e.target.value)}
@@ -69,7 +69,7 @@ export default function BuildingForm({ initialValues, onSubmit, isSubmitting, su
           </Form.Group>
 
           <Form.Group controlId="address">
-            <Form.Label>Address</Form.Label>
+            <Form.Label className="required">Address</Form.Label>
             <Form.Control
               value={address}
               onChange={e => setAddress(e.target.value)}

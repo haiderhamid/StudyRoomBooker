@@ -1091,3 +1091,43 @@ a.schedule-booking.is-mine:hover {
     width: 100%;
   }
 }
+
+.detail-list {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+
+.detail-list dt {
+  font-weight: 500;
+  color: var(--srb-muted);
+}
+
+.detail-list dd {
+  margin: 0;
+}
+
+.notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background-color: var(--srb-white);
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+/* Adds a red star after the label of fields that must be filled in. */
+.form-label.required::after {
+  content: " *";
+  color: var(--srb-busy);
+}
+
+/* When the chosen time clashes with a booking, only the red frame is shown,
+   so the text of the booking under it can still be read. */
+.schedule-selected.is-conflict {
+  background-color: transparent;
+}
+
+.schedule-selected.is-conflict span {
+  display: none;
+}

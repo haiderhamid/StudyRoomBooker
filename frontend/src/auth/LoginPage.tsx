@@ -41,7 +41,7 @@ export default function LoginPage() {
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="username">
-              <Form.Label>Username</Form.Label>
+              <Form.Label>Username or email</Form.Label>
               <Form.Control
                 value={username}
                 onChange={e => setUsername(e.target.value)}

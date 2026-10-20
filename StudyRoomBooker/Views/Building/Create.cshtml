@@ -15,12 +15,12 @@
 
             <form asp-action="Create" method="post">
                 <div class="mb-3">
-                    <label asp-for="Name" class="form-label">Name</label>
+                    <label asp-for="Name" class="form-label required">Name</label>
                     <input asp-for="Name" class="form-control" />
                     <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
                 <div>
-                    <label asp-for="Address" class="form-label">Address</label>
+                    <label asp-for="Address" class="form-label required">Address</label>
                     <input asp-for="Address" class="form-control" />
                     <span asp-validation-for="Address" class="text-danger"></span>
                 </div>

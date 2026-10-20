@@ -1,6 +1,6 @@
 # StudyRoomBooker
 
-StudyRoomBooker is a web app for booking study rooms at OsloMet. Students can find a free room for a given day and time, see a weekly schedule for each room, and manage their own bookings. Administrators manage buildings and rooms.
+StudyRoomBooker is a web app for booking study rooms at OsloMet. Students can find a free room for a given day and time, see a weekly schedule for each room, manage their own bookings, and join or leave bookings made by other students. Administrators manage buildings and rooms.
 
 The project contains two sub-applications that solve the same task:
 
@@ -27,7 +27,9 @@ The same users exist in both sub-apps.
 | Admin | admin@oslomet.no | Admin123! |
 | Student | test@oslomet.no | Test123! |
 
-Admins can create, edit and delete buildings, rooms and all bookings. Students can book rooms and edit or delete their own bookings. New users who register get the Student role.
+Admins can create, edit and delete buildings, rooms and all bookings. Students can book rooms, edit or delete their own bookings, and join or leave other students' bookings while there are free seats. New users who register get the Student role.
+
+In the React app you can log in with either your username or your email.
 
 ## Run sub-app 1 (MVC)
 

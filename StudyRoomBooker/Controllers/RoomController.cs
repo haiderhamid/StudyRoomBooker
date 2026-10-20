@@ -21,6 +21,7 @@ public class RoomController : Controller
         _logger = logger;
     }
 
+    // Equipment is filtered here because the user can pick more than one. 
     [HttpGet]
     public async Task<IActionResult> Index(int? buildingId, int? minCapacity, List<int>? facilityIds)
     {
@@ -59,6 +60,7 @@ public class RoomController : Controller
     }
 
     [HttpGet]
+    // Room page with a calendar for one week. 
     public async Task<IActionResult> Details(int id, DateTime? week)
     {
         var room = await _roomRepository.GetRoomById(id);
@@ -77,6 +79,7 @@ public class RoomController : Controller
     }
 
     [HttpGet]
+    // Returns just the calendar. site.js uses this to update it on the booking form. 
     public async Task<IActionResult> Schedule(int id, DateTime? week, DateTime? date, string? from, string? to, int? excludeBookingId)
     {
         var weekStart = StartOfWeek(week ?? date ?? DateTime.Today);
@@ -94,6 +97,7 @@ public class RoomController : Controller
         return PartialView("_WeekSchedule", schedule);
     }
 
+    // Gets one week of bookings for a room. When editing the booking being edited is left out. 
     private async Task<WeekScheduleViewModel> BuildSchedule(int roomId, DateTime weekStart, int? excludeBookingId)
     {
         var bookings = await _bookingRepository.GetAll();
@@ -115,6 +119,7 @@ public class RoomController : Controller
         };
     }
 
+    // Gets the Monday of the week. 
     private static DateTime StartOfWeek(DateTime date)
     {
         var daysSinceMonday = ((int)date.DayOfWeek + 6) % 7;

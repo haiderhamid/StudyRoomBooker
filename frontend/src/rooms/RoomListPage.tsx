@@ -41,6 +41,7 @@ export default function RoomListPage() {
     },
   });
 
+  // The room must have all the chosen equipment.
   const matchingRooms = rooms.filter(room =>
     facilityIds.every(id => room.facilityIds.includes(id)));
 
@@ -155,7 +156,7 @@ export default function RoomListPage() {
       <ul className="room-grid">
         {matchingRooms.map(room => (
           <li key={room.id} className="room-card">
-            <Link to={`/rooms/${room.id}`} className="room-number stretched-link" aria-label={`Room ${room.roomNumber}`}>{room.roomNumber}</Link>
+            <Link to={`/rooms/${room.id}`} className="room-number stretched-link" aria-label={`Room ${room.roomNumber}, ${room.buildingName}`}><span className="room-prefix">{room.buildingShortName}</span>{room.roomNumber}</Link>
             <span className="item-meta">{room.buildingName}</span>
             <RoomTags room={room} />
             {isAdmin && (

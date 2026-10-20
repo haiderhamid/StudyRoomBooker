@@ -17,6 +17,7 @@ public class BookingRepository : IBookingRepository
         {
             return await _context.Bookings
                 .Include(b => b.Room!).ThenInclude(r => r.Building)
+                .Include(b => b.Participants)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -32,6 +33,7 @@ public class BookingRepository : IBookingRepository
         {
             return await _context.Bookings
                 .Include(b => b.Room!).ThenInclude(r => r.Building)
+                .Include(b => b.Participants)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
         catch (Exception ex)
@@ -96,6 +98,7 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
+            // Two bookings overlap if one starts before the other ends. excludeBookingId lets Edit skip itself.
             return await _context.Bookings.AnyAsync(b =>
                 b.Id != excludeBookingId &&
                 b.RoomId == roomId &&
@@ -119,6 +122,43 @@ public class BookingRepository : IBookingRepository
         {
             _logger.LogError(ex, "[BookingRepository] HasBookingsForRoom() failed for RoomId {RoomId}.", roomId);
             return true;
+        }
+    }
+
+    public async Task<bool> AddParticipant(int bookingId, string userName)
+    {
+        try
+        {
+            _context.BookingParticipants.Add(new BookingParticipant { BookingId = bookingId, UserName = userName });
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[BookingRepository] AddParticipant() failed for BookingId {BookingId}.", bookingId);
+            return false;
+        }
+    }
+
+    public async Task<bool> RemoveParticipant(int bookingId, string userName)
+    {
+        try
+        {
+            var participant = await _context.BookingParticipants
+                .FirstOrDefaultAsync(p => p.BookingId == bookingId && p.UserName == userName);
+            if (participant == null)
+            {
+                return false;
+            }
+
+            _context.BookingParticipants.Remove(participant);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[BookingRepository] RemoveParticipant() failed for BookingId {BookingId}.", bookingId);
+            return false;
         }
     }
 }

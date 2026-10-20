@@ -16,6 +16,8 @@ public class RoomDto
 
     public string? BuildingName { get; set; }
 
+    public string? BuildingShortName { get; set; }
+
     public List<int> FacilityIds { get; set; } = new List<int>();
 
     public List<string> FacilityNames { get; set; } = new List<string>();

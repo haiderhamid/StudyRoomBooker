@@ -10,6 +10,7 @@ export default function ProtectedRoute() {
   }
 
   if (!token) {
+    // Not logged in: go to login, and come back here afterwards.
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 

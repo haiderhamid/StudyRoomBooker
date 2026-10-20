@@ -9,7 +9,7 @@ import * as BookingService from './BookingService';
 import { useAuth } from '../auth/useAuth';
 import WeekSchedule from '../rooms/WeekSchedule';
 import * as RoomService from '../rooms/RoomService';
-import { addDays, startOfWeek, timeOptions, toDateString, todayString } from '../shared/dateTime';
+import { addDays, availableTimes, moveEndTime, startOfWeek, toDateString, todayString } from '../shared/dateTime';
 import DatePicker from '../shared/DatePicker';
 
 interface BookingFormProps {
@@ -50,7 +50,7 @@ export default function BookingForm({
   const [toTime, setToTime] = useState<string>(initialValues ? initialValues.endTime.substring(11, 16) : (defaultToTime ?? ''));
   const [errors, setErrors] = useState<BookingFormErrors>({});
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date(`${date}T00:00:00`)));
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
 
   const { data: rooms = [] } = useQuery<Room[], Error>({
     queryKey: ['rooms', '', '', ''],
@@ -62,20 +62,29 @@ export default function BookingForm({
     queryFn: BookingService.fetchBookings,
   });
 
+  // Moves the end time when the start time changes.
+  const handleFromTimeChange = (newFrom: string) => {
+    setToTime(moveEndTime(fromTime, toTime, newFrom));
+    setFromTime(newFrom);
+  };
+
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
     setWeekStart(startOfWeek(new Date(`${newDate}T00:00:00`)));
   };
 
   const weekEnd = toDateString(addDays(weekStart, 7));
+  // Bookings for the chosen room and week. When editing, the booking itself is left out.
   const roomBookings = bookings.filter(b =>
     String(b.roomId) === roomId &&
     b.id !== initialValues?.id &&
     b.startTime.substring(0, 10) >= toDateString(weekStart) &&
     b.startTime.substring(0, 10) < weekEnd);
   const selection = fromTime && toTime && toTime > fromTime ? { date, from: fromTime, to: toTime } : undefined;
-  const isMine = (booking: Booking) => !!user && booking.bookedBy === user.sub;
+  // Bookings you made or joined get their own colour in the schedule.
+  const isMine = (booking: Booking) => !!user && (booking.bookedBy === user.sub || !!booking.isJoined);
 
+  // Checks the form before it is sent. The API checks everything again.
   const validate = (): BookingFormErrors => {
     const newErrors: BookingFormErrors = {};
     if (!roomId) {
@@ -113,6 +122,7 @@ export default function BookingForm({
       subject: subject.trim(),
       startTime: `${date}T${fromTime}:00`,
       endTime: `${date}T${toTime}:00`,
+      // The API sets BookedBy from the token, so it is not part of the form.
       bookedBy: initialValues?.bookedBy ?? '',
     });
   };
@@ -167,11 +177,11 @@ export default function BookingForm({
                   <Form.Label>Start time</Form.Label>
                   <Form.Select
                     value={fromTime}
-                    onChange={e => setFromTime(e.target.value)}
+                    onChange={e => handleFromTimeChange(e.target.value)}
                     isInvalid={!!errors.fromTime}
                   >
                     <option value="">Select</option>
-                    {timeOptions.map(t => (
+                    {availableTimes(date, fromTime).map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </Form.Select>
@@ -187,7 +197,7 @@ export default function BookingForm({
                     isInvalid={!!errors.toTime}
                   >
                     <option value="">Select</option>
-                    {timeOptions.map(t => (
+                    {availableTimes(date, toTime).map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </Form.Select>
@@ -219,7 +229,6 @@ export default function BookingForm({
             onNextWeek={() => setWeekStart(addDays(weekStart, 7))}
             onThisWeek={() => setWeekStart(startOfWeek(new Date()))}
             isMine={isMine}
-            canManage={booking => isAdmin || isMine(booking)}
             selection={selection}
           />
         )}

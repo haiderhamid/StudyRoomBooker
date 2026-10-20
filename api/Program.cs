@@ -14,6 +14,7 @@ builder.Services.AddSerilog(config => config
 .WriteTo.Console()
 .WriteTo.File($"Logs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log"));
 
+// IgnoreCycles stops endless loops when a room points to its building and the building points back to its rooms.
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
@@ -22,14 +23,17 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Users are stored in their own database, separate from rooms and bookings.
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("AuthDbContextConnection")));
 
+// Login with roles (Admin and Student). The error describer gives friendlier password messages.
 builder.Services.AddIdentity<AuthUser, IdentityRole>()
     .AddEntityFrameworkStores<AuthDbContext>()
     .AddDefaultTokenProviders()
     .AddErrorDescriber<CustomIdentityErrorDescriber>();
 
+// The API uses JWT tokens instead of cookies. The token in each request is checked here.
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -53,6 +57,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+// Gives errors a standard JSON format.
 builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
@@ -60,6 +65,7 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
 
+// Lets the React app on localhost call the API.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
@@ -75,6 +81,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     context.Database.Migrate();
 
+    // Only add test data if the database is empty.
     if (!context.Buildings.Any())
     {
         var p35 = new Building { Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" };
@@ -134,7 +141,8 @@ using (var scope = app.Services.CreateScope())
             new Booking { Room = room101, Subject = "ITPE3200 group project", BookedBy = "test@oslomet.no",
                 StartTime = today.AddHours(9), EndTime = today.AddHours(11) },
             new Booking { Room = room101, Subject = "Algorithms study group", BookedBy = "anna@oslomet.no",
-                StartTime = today.AddHours(13), EndTime = today.AddHours(15).AddMinutes(30) },
+                StartTime = today.AddHours(13), EndTime = today.AddHours(15).AddMinutes(30),
+                Participants = new List<BookingParticipant> { new() { UserName = "test@oslomet.no" }, new() { UserName = "jonas@oslomet.no" } } },
             new Booking { Room = room102, Subject = "Database exam prep", BookedBy = "jonas@oslomet.no",
                 StartTime = today.AddHours(10), EndTime = today.AddHours(12) },
             new Booking { Room = room103, Subject = "Bachelor thesis meeting", BookedBy = "sara@oslomet.no",
@@ -150,9 +158,11 @@ using (var scope = app.Services.CreateScope())
             new Booking { Room = room303, Subject = "Hackathon planning", BookedBy = "sara@oslomet.no",
                 StartTime = today.AddHours(11), EndTime = today.AddHours(14) },
             new Booking { Room = room101, Subject = "ITPE3200 group project", BookedBy = "test@oslomet.no",
-                StartTime = today.AddDays(1).AddHours(10), EndTime = today.AddDays(1).AddHours(12) },
+                StartTime = today.AddDays(1).AddHours(10), EndTime = today.AddDays(1).AddHours(12),
+                Participants = new List<BookingParticipant> { new() { UserName = "sara@oslomet.no" } } },
             new Booking { Room = room202, Subject = "Networking exam prep", BookedBy = "anna@oslomet.no",
-                StartTime = today.AddDays(1).AddHours(13), EndTime = today.AddDays(1).AddHours(16) },
+                StartTime = today.AddDays(1).AddHours(13), EndTime = today.AddDays(1).AddHours(16),
+                Participants = new List<BookingParticipant> { new() { UserName = "test@oslomet.no" } } },
             new Booking { Room = room303, Subject = "Startup workshop", BookedBy = "maria@oslomet.no",
                 StartTime = today.AddDays(2).AddHours(9), EndTime = today.AddDays(2).AddHours(15) }
         );
@@ -163,6 +173,7 @@ using (var scope = app.Services.CreateScope())
     var authContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     authContext.Database.Migrate();
 
+    // Adds the roles and the two test users if they don't exist.
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var roleName in new[] { "Admin", "Student" })
     {
@@ -188,6 +199,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Unexpected errors return a clean JSON error instead of a crash.
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 

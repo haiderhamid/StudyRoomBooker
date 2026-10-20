@@ -7,5 +7,7 @@ public interface IBookingRepository
     Task<bool> Delete(int id);
     Task<bool> IsRoomBooked(int roomId, DateTime startTime, DateTime endTime, int excludeBookingId);
     Task<bool> HasBookingsForRoom(int roomId);
+    Task<bool> AddParticipant(int bookingId, string userName);
+    Task<bool> RemoveParticipant(int bookingId, string userName);
 
 }

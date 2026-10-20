@@ -11,8 +11,10 @@ export interface AuthContextType {
   logout: () => void;
 }
 
+// Shared login state for the whole app.
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Shortcut, so components can write useAuth() instead of useContext(AuthContext).
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

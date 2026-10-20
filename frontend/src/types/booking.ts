@@ -7,4 +7,8 @@ export interface Booking {
   startTime: string;
   endTime: string;
   bookedBy: string;
+  seatsTaken?: number;
+  roomCapacity?: number;
+  isJoined?: boolean;
+  participants?: string[];
 }

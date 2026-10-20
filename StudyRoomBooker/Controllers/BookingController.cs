@@ -16,6 +16,7 @@ public class BookingController : Controller
         _logger = logger;
     }
 
+    // Shows the bookings the logged in user has made or joined. 
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index()
@@ -28,7 +29,124 @@ public class BookingController : Controller
         }
 
         var userName = User.Identity?.Name;
-        return View(bookings.Where(b => b.BookedBy == userName).ToList());
+        return View(bookings.Where(b => b.BookedBy == userName || IsParticipant(b, userName)).ToList());
+    }
+
+    // Shows one booking. Here other students can see how many seats are left and join.
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found.", id);
+            return NotFound();
+        }
+
+        var userName = User.Identity?.Name;
+        ViewBag.CanManage = userName != null && CanManage(booking);
+        ViewBag.HasStarted = HasStarted(booking);
+        ViewBag.IsJoined = IsParticipant(booking, userName);
+        ViewBag.JoinError = userName == null ? null : JoinError(booking, userName);
+        return View(booking);
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Join(int id)
+    {
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found for joining.", id);
+            return NotFound();
+        }
+
+        var userName = User.Identity?.Name ?? string.Empty;
+        var error = JoinError(booking, userName);
+        if (error != null)
+        {
+            TempData["Error"] = error;
+            return RedirectToAction("Details", new { id });
+        }
+
+        if (await _bookingRepository.AddParticipant(id, userName))
+        {
+            _logger.LogInformation("[BookingController] {User} joined booking {Id}.", userName, id);
+            TempData["Message"] = "You have joined this booking.";
+        }
+        else
+        {
+            TempData["Error"] = "Could not join the booking. Please try again.";
+        }
+        return RedirectToAction("Details", new { id });
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Leave(int id, string? returnUrl = null)
+    {
+        var booking = await _bookingRepository.GetBookingById(id);
+        if (booking == null)
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} not found for leaving.", id);
+            return NotFound();
+        }
+
+        var userName = User.Identity?.Name ?? string.Empty;
+        if (!IsParticipant(booking, userName))
+        {
+            TempData["Error"] = "You have not joined this booking.";
+        }
+        else if (booking.EndTime <= DateTime.Now)
+        {
+            TempData["Error"] = "This booking has ended.";
+        }
+        else if (await _bookingRepository.RemoveParticipant(id, userName))
+        {
+            _logger.LogInformation("[BookingController] {User} left booking {Id}.", userName, id);
+            TempData["Message"] = "You have left the booking.";
+        }
+        else
+        {
+            TempData["Error"] = "Could not leave the booking. Please try again.";
+        }
+
+        // Only go back to pages on our own site, so the link can't send the user somewhere else.
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+        return RedirectToAction("Details", new { id });
+    }
+
+    private bool IsParticipant(Booking booking, string? userName)
+    {
+        return booking.Participants?.Any(p => p.UserName == userName) == true;
+    }
+
+    // Returns why the user can't join, or null if they can.
+    private string? JoinError(Booking booking, string userName)
+    {
+        if (booking.BookedBy == userName)
+        {
+            return "This is your own booking.";
+        }
+        if (IsParticipant(booking, userName))
+        {
+            return "You have already joined this booking.";
+        }
+        if (booking.EndTime <= DateTime.Now)
+        {
+            return "This booking has ended.";
+        }
+        if (booking.SeatsTaken >= (booking.Room?.Capacity ?? 0))
+        {
+            return "This booking is full.";
+        }
+        return null;
     }
 
     // Makes the list of rooms for the dropdown in Create and Edit.
@@ -42,6 +160,7 @@ public class BookingController : Controller
         }).ToList();
     }
 
+    // Times from 07.00 to 20.00, every 15 minutes. 
     private List<SelectListItem> GetTimeSelectList()
     {
         var times = new List<SelectListItem>();
@@ -56,16 +175,19 @@ public class BookingController : Controller
         return times;
     }
 
+    // Admins can change any booking, students can only change their own. 
     private bool CanManage(Booking booking)
     {
         return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
+    // Students can't change or delete a booking after it has started. Admins can. 
     private bool HasStarted(Booking booking)
     {
         return booking.StartTime <= DateTime.Now && !User.IsInRole("Admin");
     }
 
+    // Checks the times: end after start, quarter hours, not in the past and between 7 am to 8 pm. 
     private void ValidateTimes(Booking booking)
     {
         if (booking.EndTime <= booking.StartTime)
@@ -96,6 +218,7 @@ public class BookingController : Controller
         return time.Minute % 15 == 0 && time.Second == 0;
     }
 
+    // Room, date and time come from the Book button, so the form is already filled in.
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Create(int? roomId = null, DateTime? date = null, string? from = null, string? to = null)
@@ -146,11 +269,13 @@ public class BookingController : Controller
         var booking = viewModel.Booking;
         booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
         booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
+        // BookedBy is set from the logged in user, not from the form, so that nobody can book in someone else's name. 
+        // Field is not in the form so it is removed from the validation. 
         booking.BookedBy = User.Identity?.Name ?? string.Empty;
         ModelState.Remove("Booking.BookedBy");
 
         ValidateTimes(booking);
-
+        // Checks if the room is already booked at this time.
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
@@ -189,6 +314,11 @@ public class BookingController : Controller
             return Forbid();
         }
 
+        if (HasStarted(booking))
+        {
+            return View("Started", booking);
+        }
+
         var viewModel = new BookingViewModel
         {
             Booking = booking,
@@ -210,7 +340,8 @@ public class BookingController : Controller
         {
             return NotFound();
         }
-
+        // Loads the saved booking and copies the new values into it. 
+        // Keeps BookedBy unchanged and lets us check who owns the booking. 
         var booking = await _bookingRepository.GetBookingById(id);
         if (booking == null)
         {
@@ -223,6 +354,12 @@ public class BookingController : Controller
             return Forbid();
         }
 
+        if (HasStarted(booking))
+        {
+            _logger.LogWarning("[BookingController] Booking with Id {Id} was not updated because it has started.", id);
+            return View("Started", booking);
+        }
+
         booking.RoomId = viewModel.Booking.RoomId;
         booking.Subject = viewModel.Booking.Subject;
         booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
@@ -230,7 +367,14 @@ public class BookingController : Controller
         ModelState.Remove("Booking.BookedBy");
 
         ValidateTimes(booking);
+        // If people have joined, the new room must still have a seat for everyone.
+        var room = await _roomRepository.GetRoomById(booking.RoomId);
+        if (room != null && room.Capacity < booking.SeatsTaken)
+        {
+            ModelState.AddModelError("", $"{booking.SeatsTaken} people are in this booking, but the room only has {room.Capacity} seats.");
+        }
 
+        // Same check as in Create, but skips the booking we are editing. 
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
@@ -277,6 +421,7 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        // Checks that the booking exists and that the user is allowed to delete it. 
         var booking = await _bookingRepository.GetBookingById(id);
         if (booking == null)
         {

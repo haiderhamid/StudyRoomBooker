@@ -15,6 +15,7 @@ function timeToMinutes(time: string): number {
   return Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
 }
 
+// Where a time is on the 07-20 bar, in percent.
 function toPercent(minutes: number): number {
   return ((minutes - DAY_START) / DAY_LENGTH) * 100;
 }

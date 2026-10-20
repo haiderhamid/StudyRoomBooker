@@ -13,4 +13,18 @@ public class Building
     public string Address { get; set; } = string.Empty;
 
     public virtual List<Room>? Rooms { get; set; }
+
+    // Short name for the building, for example "Pilestredet 35" becomes "P35". It is not saved in the database.
+    public string ShortName
+    {
+        get
+        {
+            var shortName = "";
+            foreach (var word in Name.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                shortName += char.IsDigit(word[0]) ? word : char.ToUpper(word[0]).ToString();
+            }
+            return shortName;
+        }
+    }
 }

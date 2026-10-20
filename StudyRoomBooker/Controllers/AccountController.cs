@@ -31,6 +31,7 @@ public class AccountController : Controller
 
             if (result.Succeeded)
             {
+                // New users are always students.
                 await _userManager.AddToRoleAsync(user, "Student");
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 _logger.LogInformation("[AccountController] A new user was registered.");
@@ -63,6 +64,7 @@ public class AccountController : Controller
             {
                 _logger.LogInformation("[AccountController] User logged in.");
 
+                // Only go back to pages in our own app, so the login can't send users to another website.
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 {
                     return Redirect(model.ReturnUrl);

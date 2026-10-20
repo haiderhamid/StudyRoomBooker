@@ -120,7 +120,7 @@
 
         <li class="room-row">
             <div>
-                <a asp-controller="Room" asp-action="Details" asp-route-id="@room.Id" class="room-number room-link" aria-label="Room @room.RoomNumber">@room.RoomNumber</a>
+                <a asp-controller="Room" asp-action="Details" asp-route-id="@room.Id" class="room-number room-link" aria-label="Room @room.RoomNumber, @room.Building?.Name"><span class="room-prefix">@room.Building?.ShortName</span>@room.RoomNumber</a>
                 <span class="room-meta">@room.Building?.Name</span>
                 <div class="room-tags">
                     <span class="room-tag room-tag-capacity">
@@ -140,6 +140,7 @@
                 </div>
             </div>
 
+            @* Timeline for the day. Each booking is placed by its start time and width in percent. *@
             <div class="availability">
                 <div class="availability-track">
                     @foreach (var booking in item.Bookings)

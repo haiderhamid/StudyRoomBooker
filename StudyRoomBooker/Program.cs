@@ -14,6 +14,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Login with roles (admin and student)
 builder.Services.AddDefaultIdentity<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
@@ -29,6 +30,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
+    // Where users go if they don't have access. 
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
@@ -41,6 +43,7 @@ using (var scope = app.Services.CreateScope())
     // Creates the database from the migrations if it does not exist yet
     context.Database.Migrate();
 
+    // Only add test data if the database is empty. 
     if (!context.Buildings.Any())
     {
         var p35 = new Building { Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" };
@@ -100,7 +103,8 @@ using (var scope = app.Services.CreateScope())
             new Booking { Room = room101, Subject = "ITPE3200 group project", BookedBy = "test@oslomet.no",
                 StartTime = today.AddHours(9), EndTime = today.AddHours(11) },
             new Booking { Room = room101, Subject = "Algorithms study group", BookedBy = "anna@oslomet.no",
-                StartTime = today.AddHours(13), EndTime = today.AddHours(15).AddMinutes(30) },
+                StartTime = today.AddHours(13), EndTime = today.AddHours(15).AddMinutes(30),
+                Participants = new List<BookingParticipant> { new() { UserName = "test@oslomet.no" }, new() { UserName = "jonas@oslomet.no" } } },
             new Booking { Room = room102, Subject = "Database exam prep", BookedBy = "jonas@oslomet.no",
                 StartTime = today.AddHours(10), EndTime = today.AddHours(12) },
             new Booking { Room = room103, Subject = "Bachelor thesis meeting", BookedBy = "sara@oslomet.no",
@@ -116,9 +120,11 @@ using (var scope = app.Services.CreateScope())
             new Booking { Room = room303, Subject = "Hackathon planning", BookedBy = "sara@oslomet.no",
                 StartTime = today.AddHours(11), EndTime = today.AddHours(14) },
             new Booking { Room = room101, Subject = "ITPE3200 group project", BookedBy = "test@oslomet.no",
-                StartTime = today.AddDays(1).AddHours(10), EndTime = today.AddDays(1).AddHours(12) },
+                StartTime = today.AddDays(1).AddHours(10), EndTime = today.AddDays(1).AddHours(12),
+                Participants = new List<BookingParticipant> { new() { UserName = "sara@oslomet.no" } } },
             new Booking { Room = room202, Subject = "Networking exam prep", BookedBy = "anna@oslomet.no",
-                StartTime = today.AddDays(1).AddHours(13), EndTime = today.AddDays(1).AddHours(16) },
+                StartTime = today.AddDays(1).AddHours(13), EndTime = today.AddDays(1).AddHours(16),
+                Participants = new List<BookingParticipant> { new() { UserName = "test@oslomet.no" } } },
             new Booking { Room = room303, Subject = "Startup workshop", BookedBy = "maria@oslomet.no",
                 StartTime = today.AddDays(2).AddHours(9), EndTime = today.AddDays(2).AddHours(15) }
         );
@@ -126,6 +132,7 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 
+    // Adds the roles and the two test users if they don't exist. 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var roleName in new[] { "Admin", "Student" })
     {
@@ -158,9 +165,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Shows our own page for errors like 404
 app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
 
 app.UseHttpsRedirection();
+// Same date and number format on every computer
 app.UseRequestLocalization("en-GB");
 app.UseRouting();
 

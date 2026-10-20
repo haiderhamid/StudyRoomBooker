@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public class Booking
 {
@@ -23,4 +24,11 @@ public class Booking
     public string BookedBy { get; set; } = string.Empty;
 
     public virtual Room? Room { get; set; }
+
+    // Other students who have joined this booking.
+    public virtual List<BookingParticipant>? Participants { get; set; }
+
+    // The person who booked plus everyone who joined. Not saved in the database.
+    [NotMapped]
+    public int SeatsTaken => 1 + (Participants?.Count ?? 0);
 }

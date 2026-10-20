@@ -1,7 +1,7 @@
+@* Weekly calendar for one room. Used on the room page and under the booking form. *@
 @model WeekScheduleViewModel
 @{
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
-    var isAdmin = User.IsInRole("Admin");
     var userName = User.Identity?.Name;
     var days = Enumerable.Range(0, 7).Select(i => Model.WeekStart.AddDays(i)).ToList();
     var hours = Enumerable.Range(HomeViewModel.DayStartHour, HomeViewModel.DayEndHour - HomeViewModel.DayStartHour + 1).ToList();
@@ -26,7 +26,7 @@
             </span>
             <span class="legend">
                 <span class="legend-swatch legend-swatch-mine" aria-hidden="true"></span>
-                Your booking
+                Yours
             </span>
             @if (Model.SelectedStart.HasValue)
             {
@@ -71,25 +71,16 @@
                         var start = booking.StartTime.TimeOfDay;
                         var end = booking.EndTime.TimeOfDay;
                         var style = $"top: {HomeViewModel.PercentOfDay(start)}%; height: {HomeViewModel.WidthOfSpan(start, end)}%";
-                        var isMine = booking.BookedBy == userName;
+                        // Bookings the user made or joined get their own colour.
+                        var isMine = booking.BookedBy == userName || booking.Participants?.Any(p => p.UserName == userName) == true;
                         var time = $"{booking.StartTime:HH:mm}–{booking.EndTime:HH:mm}";
 
-                        if (isAdmin || isMine)
-                        {
-                            <a asp-controller="Booking" asp-action="Edit" asp-route-id="@booking.Id"
-                               class="schedule-booking @(isMine ? "is-mine" : "")" style="@style"
-                               aria-label="@booking.Subject, @time. Edit booking">
-                                <strong>@booking.Subject</strong>
-                                <span>@time</span>
-                            </a>
-                        }
-                        else
-                        {
-                            <div class="schedule-booking" style="@style" aria-label="Booked @time: @booking.Subject">
-                                <strong>@booking.Subject</strong>
-                                <span>@time</span>
-                            </div>
-                        }
+                        <a asp-controller="Booking" asp-action="Details" asp-route-id="@booking.Id"
+                           class="schedule-booking @(isMine ? "is-mine" : "")" style="@style"
+                           aria-label="@booking.Subject, @time, @booking.SeatsTaken of @booking.Room?.Capacity seats taken">
+                            <strong>@booking.Subject</strong>
+                            <span>@time</span>
+                        </a>
                     }
 
                     @if (Model.SelectedStart.HasValue && Model.SelectedEnd.HasValue && Model.SelectedStart.Value.Date == day)

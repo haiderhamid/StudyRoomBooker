@@ -41,6 +41,13 @@ export default function BookingListPage() {
     },
   });
 
+  const leaveMutation = useMutation<void, Error, number>({
+    mutationFn: BookingService.leaveBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+
   const handleDelete = (booking: Booking) => {
     if (window.confirm(`Delete the booking "${booking.subject}"?`)) {
       deleteMutation.mutate(booking.id);
@@ -48,14 +55,18 @@ export default function BookingListPage() {
   };
 
   const now = new Date();
+  // Bookings that have started can't be changed, so the buttons are hidden.
   const hasStarted = (booking: Booking) => new Date(booking.startTime) <= now;
   const hasEnded = (booking: Booking) => new Date(booking.endTime) <= now;
+  // The list also has bookings made by others that you have joined.
+  const isMine = (booking: Booking) => booking.bookedBy === user?.sub;
   const visibleBookings = bookings
     .filter(b => (view === 'upcoming' ? !hasEnded(b) : hasEnded(b)))
     .sort((a, b) => (view === 'upcoming'
       ? a.startTime.localeCompare(b.startTime)
       : b.startTime.localeCompare(a.startTime)));
 
+  // The dates that have bookings. Used as headings.
   const dates: string[] = [];
   for (const booking of visibleBookings) {
     const date = booking.startTime.substring(0, 10);
@@ -69,7 +80,7 @@ export default function BookingListPage() {
       <header className="page-header">
         <div>
           <h1 className="page-title">My bookings</h1>
-          <p className="page-subtitle">The study rooms you have booked.</p>
+          <p className="page-subtitle">The study rooms you have booked or joined.</p>
         </div>
         <Link to="/" className="btn btn-primary">Book a room</Link>
       </header>
@@ -99,6 +110,12 @@ export default function BookingListPage() {
         </Alert>
       )}
 
+      {leaveMutation.error && (
+        <Alert variant="danger" dismissible onClose={() => leaveMutation.reset()}>
+          {leaveMutation.error.message}
+        </Alert>
+      )}
+
       {isLoading && (
         <Spinner animation="border" role="status" className="my-4">
           <span className="visually-hidden">Loading...</span>
@@ -124,12 +141,21 @@ export default function BookingListPage() {
                   {booking.startTime.substring(11, 16)}–{booking.endTime.substring(11, 16)}
                 </span>
                 <div className="item-main">
-                  <span className="item-title">{booking.subject}</span>
+                  <Link to={`/bookings/${booking.id}`} className="item-title">{booking.subject}</Link>
                   <span className="item-meta">
                     <Link to={`/rooms/${booking.roomId}`}>Room {booking.roomNumber}</Link> · {booking.buildingName}
+                    {' '}· {booking.seatsTaken} of {booking.roomCapacity} seats
+                    {!isMine(booking) && <span className="room-tag">Joined</span>}
                   </span>
                 </div>
-                {!hasStarted(booking) && (
+                {!isMine(booking) && !hasEnded(booking) && (
+                  <div className="item-actions">
+                    <button type="button" className="btn btn-sm btn-quiet" onClick={() => leaveMutation.mutate(booking.id)}>
+                      Leave
+                    </button>
+                  </div>
+                )}
+                {isMine(booking) && !hasStarted(booking) && (
                   <div className="item-actions">
                     <Link to={`/bookings/update/${booking.id}`} className="btn btn-sm btn-quiet">Edit</Link>
                     <button type="button" className="btn btn-sm btn-quiet btn-quiet-danger" onClick={() => handleDelete(booking)}>

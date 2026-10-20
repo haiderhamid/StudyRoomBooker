@@ -20,6 +20,7 @@ import BuildingUpdatePage from './buildings/BuildingUpdatePage';
 import BookingListPage from './bookings/BookingListPage';
 import BookingCreatePage from './bookings/BookingCreatePage';
 import BookingUpdatePage from './bookings/BookingUpdatePage';
+import BookingDetailsPage from './bookings/BookingDetailsPage';
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ export default function App() {
                   <Route path="/rooms" element={<RoomListPage />} />
                   <Route path="/rooms/:roomId" element={<RoomDetailsPage />} />
                   <Route path="/buildings" element={<BuildingListPage />} />
+                  <Route path="/bookings/:bookingId" element={<BookingDetailsPage />} />
 
                   <Route element={<AdminRoute />}>
                     <Route path="/rooms/create" element={<RoomCreatePage />} />

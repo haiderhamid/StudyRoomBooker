@@ -44,13 +44,14 @@ export default function RoomDetailsPage() {
   }
 
   const weekEnd = toDateString(addDays(weekStart, 7));
+  // Only this room's bookings in the chosen week.
   const weekBookings = bookings.filter(b =>
     b.roomId === room.id &&
     b.startTime.substring(0, 10) >= toDateString(weekStart) &&
     b.startTime.substring(0, 10) < weekEnd);
 
-  const isMine = (booking: Booking) => !!user && booking.bookedBy === user.sub;
-  const canManage = (booking: Booking) => isAdmin || isMine(booking);
+  // Bookings you made or joined get their own colour in the schedule.
+  const isMine = (booking: Booking) => !!user && (booking.bookedBy === user.sub || !!booking.isJoined);
 
   return (
     <>
@@ -58,7 +59,7 @@ export default function RoomDetailsPage() {
 
       <header className="page-header">
         <div>
-          <h1 className="page-title">Room {room.roomNumber}</h1>
+          <h1 className="page-title"><span className="room-prefix">{room.buildingShortName}</span>{room.roomNumber}</h1>
           <p className="page-subtitle">{room.buildingName}</p>
           <RoomTags room={room} />
         </div>
@@ -88,7 +89,6 @@ export default function RoomDetailsPage() {
           onNextWeek={() => setWeekStart(addDays(weekStart, 7))}
           onThisWeek={() => setWeekStart(startOfWeek(new Date()))}
           isMine={isMine}
-          canManage={canManage}
         />
       )}
     </>

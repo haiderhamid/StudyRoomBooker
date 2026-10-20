@@ -12,6 +12,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  // The page the user tried to open before logging in.
   const returnTo = location.state?.from ?? '/';
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

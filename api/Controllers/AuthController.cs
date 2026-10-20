@@ -32,6 +32,7 @@ public class AuthController : ControllerBase
 
         if (result.Succeeded)
         {
+            // New users are always students.
             await _userManager.AddToRoleAsync(user, "Student");
             _logger.LogInformation("[AuthController] User {Username} registered successfully.", registerDto.Username);
             return Ok(new { Message = "User registered successfully" });
@@ -61,6 +62,7 @@ public class AuthController : ControllerBase
         return Unauthorized("Invalid username or password.");
     }
 
+    // With JWT the real logout happens in React, by deleting the token.
     [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
@@ -70,6 +72,7 @@ public class AuthController : ControllerBase
         return Ok(new { Message = "Logout successful" });
     }
 
+    // Makes the token React sends with every request. It holds the username and roles, and expires after 2 hours.
     private async Task<string> GenerateJwtToken(AuthUser user)
     {
         var jwtKey = _configuration["Jwt:Key"];
@@ -91,6 +94,7 @@ public class AuthController : ControllerBase
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        // Adds the user's roles, so [Authorize(Roles = "Admin")] works.
         var roles = await _userManager.GetRolesAsync(user);
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

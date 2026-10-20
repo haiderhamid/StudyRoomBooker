@@ -4,6 +4,7 @@ export interface Room {
   capacity: number;
   buildingId: number;
   buildingName?: string | null;
+  buildingShortName?: string | null;
   facilityIds: number[];
   facilityNames: string[];
 }

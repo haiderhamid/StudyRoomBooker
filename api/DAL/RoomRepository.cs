@@ -32,6 +32,7 @@ public class RoomRepository : IRoomRepository
     {
         try
         {
+            // AsNoTracking because we only read here. It avoids conflicts when the controller updates the room after.
             return await _context.Rooms
                 .AsNoTracking()
                 .Include(r => r.Building)
@@ -65,6 +66,7 @@ public class RoomRepository : IRoomRepository
     {
         try
         {
+            // Removes the old equipment first, then saves the room with the new equipment.
             var oldFacilities = _context.RoomFacilities.Where(rf => rf.RoomId == room.Id);
             _context.RoomFacilities.RemoveRange(oldFacilities);
 

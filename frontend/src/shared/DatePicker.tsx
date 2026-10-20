@@ -16,6 +16,7 @@ function parseDate(value: string): Date {
   return new Date(`${value}T00:00:00`);
 }
 
+// The 42 days (6 weeks) shown in the calendar, starting on a Monday.
 function buildMonth(year: number, month: number): Date[] {
   const firstDay = new Date(year, month, 1);
   const daysBeforeMonday = (firstDay.getDay() + 6) % 7;

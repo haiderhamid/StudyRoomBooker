@@ -63,7 +63,7 @@
     @foreach (var room in Model.Rooms)
     {
         <li class="room-card">
-            <a asp-action="Details" asp-route-id="@room.Id" class="room-number stretched-link" aria-label="Room @room.RoomNumber">@room.RoomNumber</a>
+            <a asp-action="Details" asp-route-id="@room.Id" class="room-number stretched-link" aria-label="Room @room.RoomNumber, @room.Building?.Name"><span class="room-prefix">@room.Building?.ShortName</span>@room.RoomNumber</a>
             <span class="item-meta">@room.Building?.Name</span>
             <div class="room-tags">
                 <span class="room-tag room-tag-capacity">

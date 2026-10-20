@@ -1,0 +1,87 @@
+@model Booking
+@{
+    ViewData["Title"] = Model.Subject;
+    var capacity = Model.Room?.Capacity ?? 0;
+    var canManage = ViewBag.CanManage == true;
+    var isJoined = ViewBag.IsJoined == true;
+    var joinError = ViewBag.JoinError as string;
+    var hasEnded = Model.EndTime <= DateTime.Now;
+}
+
+<div class="form-shell form-shell-narrow">
+    <header class="page-header">
+        <h1 class="page-title">@Model.Subject</h1>
+        <p class="page-subtitle">@Model.SeatsTaken of @capacity seats taken</p>
+    </header>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success" role="status">@TempData["Message"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <dl class="detail-list">
+                <dt>Room</dt>
+                <dd><a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId">Room @Model.Room?.RoomNumber</a>, @Model.Room?.Building?.Name</dd>
+                <dt>Date</dt>
+                <dd>@Model.StartTime.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))</dd>
+                <dt>Time</dt>
+                <dd>@Model.StartTime.ToString("HH:mm")–@Model.EndTime.ToString("HH:mm")</dd>
+                @* Only the owner and admins can see who is in the booking. *@
+                @if (canManage)
+                {
+                    <dt>Booked by</dt>
+                    <dd>@Model.BookedBy</dd>
+                    <dt>Joined</dt>
+                    <dd>
+                        @if (Model.Participants == null || Model.Participants.Count == 0)
+                        {
+                            <span>Nobody yet</span>
+                        }
+                        else
+                        {
+                            <span>@(string.Join(", ", Model.Participants.Select(p => p.UserName)))</span>
+                        }
+                    </dd>
+                }
+            </dl>
+
+            <div class="form-actions">
+                @if (canManage && ViewBag.HasStarted != true && !hasEnded)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-quiet btn-quiet-danger">Delete</a>
+                }
+                else if (isJoined && !hasEnded)
+                {
+                    <form asp-action="Leave" asp-route-id="@Model.Id" method="post">
+                        <button type="submit" class="btn btn-outline-secondary">Leave</button>
+                    </form>
+                }
+                else if (User.Identity?.IsAuthenticated != true)
+                {
+                    if (!hasEnded)
+                    {
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary">Log in to join</a>
+                    }
+                }
+                else if (joinError == null)
+                {
+                    <form asp-action="Join" asp-route-id="@Model.Id" method="post">
+                        <button type="submit" class="btn btn-primary">Join</button>
+                    </form>
+                }
+                else if (!canManage && !isJoined)
+                {
+                    <p class="notice">@joinError</p>
+                }
+                <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId" class="btn btn-quiet">Back to room</a>
+            </div>
+        </div>
+    </div>
+</div>

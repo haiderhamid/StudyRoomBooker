@@ -21,6 +21,7 @@ public class BuildingAPIController : ControllerBase
             Id = building.Id,
             Name = building.Name,
             Address = building.Address,
+            // Number of rooms, shown on the Buildings page.
             RoomCount = building.Rooms?.Count ?? 0
         };
     }
@@ -85,6 +86,7 @@ public class BuildingAPIController : ControllerBase
             return BadRequest("Building data cannot be null");
         }
 
+        // Return 404 if the building doesn't exist.
         if (await _buildingRepository.GetBuildingById(id) == null)
         {
             _logger.LogWarning("[BuildingAPIController] Building with Id {Id} not found for update.", id);
@@ -119,6 +121,7 @@ public class BuildingAPIController : ControllerBase
             return NotFound("Building not found");
         }
 
+        // A building with rooms can't be deleted.
         if (building.Rooms != null && building.Rooms.Any())
         {
             _logger.LogWarning("[BuildingAPIController] Building with Id {Id} was not deleted because it still has rooms.", id);

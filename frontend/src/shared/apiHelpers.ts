@@ -4,6 +4,7 @@ export const headers = {
   'Content-Type': 'application/json',
 };
 
+// Adds the token to the request, so the API knows who is logged in.
 export function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
   const authHeaders: Record<string, string> = {
@@ -15,6 +16,7 @@ export function getAuthHeaders(): Record<string, string> {
   return authHeaders;
 }
 
+// Turns error replies from the API into messages the user can read.
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (response.ok) {
     return response.json() as Promise<T>;

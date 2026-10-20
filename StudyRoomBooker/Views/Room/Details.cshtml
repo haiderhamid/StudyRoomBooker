@@ -8,7 +8,7 @@
 
 <header class="page-header">
     <div>
-        <h1 class="page-title">Room @Model.Room.RoomNumber</h1>
+        <h1 class="page-title"><span class="room-prefix">@Model.Room.Building?.ShortName</span>@Model.Room.RoomNumber</h1>
         <p class="page-subtitle">@Model.Room.Building?.Name</p>
         <div class="room-tags">
             <span class="room-tag room-tag-capacity">

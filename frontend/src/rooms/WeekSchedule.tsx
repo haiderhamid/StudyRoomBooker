@@ -19,10 +19,10 @@ interface WeekScheduleProps {
   onNextWeek: () => void;
   onThisWeek: () => void;
   isMine: (booking: Booking) => boolean;
-  canManage: (booking: Booking) => boolean;
   selection?: ScheduleSelection;
 }
 
+// Where a time is in the day column, in percent.
 function toPercent(time: string): number {
   const minutes = Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
   const clamped = Math.min(Math.max(minutes, DAY_START * 60), DAY_END * 60);
@@ -36,7 +36,6 @@ export default function WeekSchedule({
   onNextWeek,
   onThisWeek,
   isMine,
-  canManage,
   selection,
 }: WeekScheduleProps) {
   const days: Date[] = [];
@@ -44,6 +43,7 @@ export default function WeekSchedule({
     days.push(addDays(weekStart, i));
   }
   const today = todayString();
+  // True if the chosen time overlaps a booking. Shows a red frame.
   const selectionIsBooked = !!selection && bookings.some(b =>
     b.startTime.substring(0, 10) === selection.date &&
     b.startTime.substring(11, 16) < selection.to &&
@@ -68,7 +68,7 @@ export default function WeekSchedule({
           </span>
           <span className="legend">
             <span className="legend-swatch legend-swatch-mine" aria-hidden="true"></span>
-            Your booking
+            Yours
           </span>
           {selection && (
             <span className="legend">
@@ -116,32 +116,18 @@ export default function WeekSchedule({
                   const top = toPercent(from);
                   const style = { top: `${top}%`, height: `${toPercent(to) - top}%` };
                   const className = `schedule-booking${isMine(booking) ? ' is-mine' : ''}`;
-                  const content = (
-                    <>
-                      <strong>{booking.subject}</strong>
-                      <span>{from}–{to}</span>
-                    </>
-                  );
-
-                  return canManage(booking) ? (
+                  // Every booking links to its own page, where you can join it.
+                  return (
                     <Link
                       key={booking.id}
-                      to={`/bookings/update/${booking.id}`}
+                      to={`/bookings/${booking.id}`}
                       className={className}
                       style={style}
-                      aria-label={`${booking.subject}, ${from} to ${to}. Edit booking`}
+                      aria-label={`${booking.subject}, ${from} to ${to}, ${booking.seatsTaken} of ${booking.roomCapacity} seats taken`}
                     >
-                      {content}
+                      <strong>{booking.subject}</strong>
+                      <span>{from}–{to}</span>
                     </Link>
-                  ) : (
-                    <div
-                      key={booking.id}
-                      className={className}
-                      style={style}
-                      aria-label={`Booked ${from} to ${to}: ${booking.subject}`}
-                    >
-                      {content}
-                    </div>
                   );
                 })}
                 {selection && selection.date === date && (

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
+// Simpler password error messages than the default ones from Identity.
 public class CustomIdentityErrorDescriber : IdentityErrorDescriber
 {
     public override IdentityError PasswordTooShort(int length)

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 public class HomeViewModel
 {
+    // Opening hours. Used in the timeline, the calendar and the time dropdowns.
     public const int DayStartHour = 7;
     public const int DayEndHour = 20;
 
@@ -20,18 +21,21 @@ public class HomeViewModel
     public bool TimeIsInvalid =>
         FromTime != null && ToTime != null && string.CompareOrdinal(ToTime, FromTime) <= 0;
 
+    // True when both times are chosen and the end is after the start.
     public bool HasTime => FromTime != null && ToTime != null && !TimeIsInvalid;
 
     public bool IsFiltered =>
         Date != DateTime.Today || FromTime != null || ToTime != null ||
         BuildingId != null || MinCapacity != null || FacilityIds.Any();
 
+    // Where a time is on the 07-20 timeline, in percent. Used to draw the bookings.
     public static double PercentOfDay(TimeSpan time)
     {
         var minutes = Math.Clamp(time.TotalMinutes, DayStartHour * 60, DayEndHour * 60);
         return (minutes - DayStartHour * 60) / ((DayEndHour - DayStartHour) * 60) * 100;
     }
 
+    // How wide a booking is on the timeline, in percent.
     public static double WidthOfSpan(TimeSpan start, TimeSpan end)
     {
         return PercentOfDay(end) - PercentOfDay(start);

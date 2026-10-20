@@ -43,8 +43,13 @@ export default function BookingUpdatePage() {
     return <Alert variant="warning">Booking not found.</Alert>;
   }
 
+  // Only the owner or an admin can edit, and not after the booking has started.
   if (!isAdmin && booking.bookedBy !== user?.sub) {
     return <Alert variant="warning">You can only edit your own bookings.</Alert>;
+  }
+
+  if (!isAdmin && new Date(booking.startTime) <= new Date()) {
+    return <Alert variant="warning">This booking has already started and cannot be changed.</Alert>;
   }
 
   return (

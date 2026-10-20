@@ -24,6 +24,7 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    // Search page. Shows all rooms and their bookings for the chosen day. 
     [HttpGet]
     public async Task<IActionResult> Index(DateTime? date, string? from, string? to,
         int? buildingId, int? minCapacity, List<int>? facilityIds)
@@ -33,6 +34,7 @@ public class HomeController : Controller
 
         var viewModel = new HomeViewModel
         {
+            // Use today if the date is missing or in the past. 
             Date = date.HasValue && date.Value.Date >= DateTime.Today ? date.Value.Date : DateTime.Today,
             FromTime = from != null && timeOptions.Contains(from) ? from : null,
             ToTime = to != null && timeOptions.Contains(to) ? to : null,
@@ -65,6 +67,7 @@ public class HomeController : Controller
 
         foreach (var room in rooms)
         {
+            // Skip rooms that don't have all the chosen equipment. 
             var hasAllFacilities = selectedFacilityIds.All(id =>
                 room.RoomFacilities != null && room.RoomFacilities.Any(rf => rf.FacilityId == id));
             if (!hasAllFacilities)
@@ -77,6 +80,7 @@ public class HomeController : Controller
                 .OrderBy(b => b.StartTime)
                 .ToList();
 
+            // The room is booked if a booking starts before our end time and ends after our start time
             var isFree = !roomBookings.Any(b =>
                 b.StartTime.TimeOfDay < selectedTo && b.EndTime.TimeOfDay > selectedFrom);
 
@@ -106,6 +110,7 @@ public class HomeController : Controller
         return View(viewModel);
     }
 
+    // The same times as in the booking form, used to check the times in the URL. 
     private static List<string> GetTimeOptions()
     {
         var times = new List<string>();

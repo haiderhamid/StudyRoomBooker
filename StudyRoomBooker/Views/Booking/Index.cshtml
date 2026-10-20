@@ -11,15 +11,26 @@
 
     var days = visibleBookings.GroupBy(b => b.StartTime.Date);
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
+    var userName = User.Identity?.Name;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <header class="page-header">
     <div>
         <h1 class="page-title">My bookings</h1>
-        <p class="page-subtitle">The study rooms you have booked.</p>
+        <p class="page-subtitle">The study rooms you have booked or joined.</p>
     </div>
     <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Book a room</a>
 </header>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success" role="status">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+}
 
 <nav class="segmented" aria-label="Show bookings">
     <a asp-action="Index" class="@(showPast ? "" : "is-active")" aria-current="@(showPast ? null : "page")">Upcoming</a>
@@ -48,20 +59,33 @@
         <ul class="item-rows">
             @foreach (var booking in day)
             {
+                var isMine = booking.BookedBy == userName;
                 <li class="item-row">
                     <span class="booking-time">@booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")</span>
                     <div class="item-main">
-                        <span class="item-title">@booking.Subject</span>
+                        <a asp-action="Details" asp-route-id="@booking.Id" class="item-title">@booking.Subject</a>
                         <span class="item-meta">
                             <a asp-controller="Room" asp-action="Details" asp-route-id="@booking.RoomId">Room @booking.Room?.RoomNumber</a> · @booking.Room?.Building?.Name
+                            · @booking.SeatsTaken of @booking.Room?.Capacity seats
+                            @if (!isMine)
+                            {
+                                <span class="room-tag">Joined</span>
+                            }
                         </span>
                     </div>
-                    @if (booking.StartTime > now)
+                    @* Bookings that have started can't be changed, so the buttons are hidden. *@
+                    @if (isMine && booking.StartTime > now)
                     {
                         <div class="item-actions">
                             <a asp-action="Edit" asp-route-id="@booking.Id" class="btn btn-sm btn-quiet">Edit</a>
                             <a asp-action="Delete" asp-route-id="@booking.Id" class="btn btn-sm btn-quiet btn-quiet-danger">Delete</a>
                         </div>
+                    }
+                    else if (!isMine && booking.EndTime > now)
+                    {
+                        <form asp-action="Leave" asp-route-id="@booking.Id" asp-route-returnUrl="@returnUrl" method="post" class="item-actions">
+                            <button type="submit" class="btn btn-sm btn-quiet">Leave</button>
+                        </form>
                     }
                 </li>
             }

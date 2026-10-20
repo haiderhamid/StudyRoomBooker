@@ -10,7 +10,7 @@ import * as RoomService from '../rooms/RoomService';
 import * as BuildingService from '../buildings/BuildingService';
 import * as BookingService from '../bookings/BookingService';
 import * as FacilityService from '../facilities/FacilityService';
-import { timeOptions, todayString } from '../shared/dateTime';
+import { availableTimes, moveEndTime, todayString } from '../shared/dateTime';
 import DatePicker from '../shared/DatePicker';
 import RoomTags from '../shared/RoomTags';
 import AvailabilityBar from './AvailabilityBar';
@@ -49,15 +49,18 @@ export default function HomePage() {
   const isFiltered = date !== todayString() || fromTime !== '' || toTime !== '' ||
     buildingId !== '' || minCapacity !== '' || facilityIds.length > 0;
 
+  // The room must have all the chosen equipment.
   const matchingRooms = rooms.filter(room =>
     facilityIds.every(id => room.facilityIds.includes(id)));
 
+  // A room is free if no booking overlaps the chosen time.
   const isFree = (roomId: number) =>
     !bookingsOnDate.some(b =>
       b.roomId === roomId &&
       b.startTime.substring(11, 16) < toTime &&
       b.endTime.substring(11, 16) > fromTime);
 
+  // When a time is chosen, free rooms are shown first.
   const freeRooms = matchingRooms.filter(room => isFree(room.id));
   const bookedRooms = matchingRooms.filter(room => !isFree(room.id));
   const sortedRooms = hasTime ? [...freeRooms, ...bookedRooms] : matchingRooms;
@@ -79,6 +82,12 @@ export default function HomePage() {
       previous.includes(id) ? previous.filter(f => f !== id) : [...previous, id]);
   };
 
+  // Moves the end time when the start time changes.
+  const handleFromTimeChange = (newFrom: string) => {
+    setToTime(moveEndTime(fromTime, toTime, newFrom));
+    setFromTime(newFrom);
+  };
+
   const resetFilters = () => {
     setDate(todayString());
     setFromTime('');
@@ -88,6 +97,7 @@ export default function HomePage() {
     setFacilityIds([]);
   };
 
+  // The Book button sends room, date and time to the booking form.
   const bookLink = (roomId: number) => {
     const params = new URLSearchParams({ roomId: String(roomId), date });
     if (hasTime) {
@@ -115,9 +125,9 @@ export default function HomePage() {
           <Col xs={6} md={2}>
             <Form.Group controlId="searchFrom">
               <Form.Label>From</Form.Label>
-              <Form.Select value={fromTime} onChange={e => setFromTime(e.target.value)}>
+              <Form.Select value={fromTime} onChange={e => handleFromTimeChange(e.target.value)}>
                 <option value="">Any time</option>
-                {timeOptions.map(t => (
+                {availableTimes(date, fromTime).map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </Form.Select>
@@ -128,7 +138,7 @@ export default function HomePage() {
               <Form.Label>To</Form.Label>
               <Form.Select value={toTime} onChange={e => setToTime(e.target.value)} isInvalid={timeIsInvalid}>
                 <option value="">Any time</option>
-                {timeOptions.map(t => (
+                {availableTimes(date, toTime).map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </Form.Select>
@@ -229,7 +239,7 @@ export default function HomePage() {
           {sortedRooms.map(room => (
             <li key={room.id} className="room-row">
               <div>
-                <Link to={`/rooms/${room.id}`} className="room-number room-link" aria-label={`Room ${room.roomNumber}`}>{room.roomNumber}</Link>
+                <Link to={`/rooms/${room.id}`} className="room-number room-link" aria-label={`Room ${room.roomNumber}, ${room.buildingName}`}><span className="room-prefix">{room.buildingShortName}</span>{room.roomNumber}</Link>
                 <span className="room-meta">{room.buildingName}</span>
                 <RoomTags room={room} />
               </div>

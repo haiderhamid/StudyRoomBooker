@@ -30,6 +30,7 @@ public class BuildingRepository : IBuildingRepository
     {
         try
         {
+            // AsNoTracking because we only read here. It avoids conflicts when the controller updates the building after.
             return await _context.Buildings
                 .AsNoTracking()
                 .Include(b => b.Rooms)

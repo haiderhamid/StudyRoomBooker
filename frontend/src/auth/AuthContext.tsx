@@ -11,6 +11,7 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Reads the saved token and throws it away if it is expired or broken.
 function getValidToken(): string | null {
   const storedToken = localStorage.getItem('token');
   if (!storedToken) {
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setToken(null);
   };
 
+  // The role comes from the token the API made at login.
   const isAdmin = user !== null && user[ROLE_CLAIM] === 'Admin';
 
   return (

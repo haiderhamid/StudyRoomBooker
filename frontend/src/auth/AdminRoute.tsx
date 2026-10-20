@@ -13,6 +13,7 @@ export default function AdminRoute() {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 
+  // Logged in, but not an admin.
   if (!isAdmin) {
     return (
       <div className="form-shell form-shell-narrow">

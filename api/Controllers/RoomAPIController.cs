@@ -16,6 +16,7 @@ public class RoomAPIController : ControllerBase
         _logger = logger;
     }
 
+    // Turns a Room into a RoomDto, so the API only sends what React needs.
     private static RoomDto ToDto(Room room)
     {
         return new RoomDto
@@ -25,6 +26,7 @@ public class RoomAPIController : ControllerBase
             Capacity = room.Capacity,
             BuildingId = room.BuildingId,
             BuildingName = room.Building?.Name,
+            BuildingShortName = room.Building?.ShortName,
             FacilityIds = room.RoomFacilities?.Select(rf => rf.FacilityId).ToList() ?? new List<int>(),
             FacilityNames = room.RoomFacilities?.Where(rf => rf.Facility != null).Select(rf => rf.Facility!.Name).ToList() ?? new List<string>()
         };
@@ -69,6 +71,7 @@ public class RoomAPIController : ControllerBase
             RoomNumber = roomDto.RoomNumber,
             Capacity = roomDto.Capacity,
             BuildingId = roomDto.BuildingId,
+            // Links the room to the chosen equipment (the many-to-many table).
             RoomFacilities = roomDto.FacilityIds
                 .Select(facilityId => new RoomFacility { FacilityId = facilityId })
                 .ToList()
@@ -94,6 +97,7 @@ public class RoomAPIController : ControllerBase
             return BadRequest("Room data cannot be null");
         }
 
+        // Return 404 if the room doesn't exist.
         if (await _roomRepository.GetRoomById(id) == null)
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} not found for update.", id);
@@ -132,6 +136,7 @@ public class RoomAPIController : ControllerBase
             return NotFound("Room not found");
         }
 
+        // A room with bookings can't be deleted.
         if (await _bookingRepository.HasBookingsForRoom(id))
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} was not deleted because it has bookings.", id);

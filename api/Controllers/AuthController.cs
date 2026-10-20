@@ -53,7 +53,14 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByNameAsync(loginDto.Username)
             ?? await _userManager.FindByEmailAsync(loginDto.Username);
 
-        if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
+        // Tells the user when no account exists, so the frontend can send them to register.
+        if (user == null)
+        {
+            _logger.LogWarning("[AuthController] Login attempt for unknown user {Username}.", loginDto.Username);
+            return NotFound("This username or email is not registered.");
+        }
+
+        if (await _userManager.CheckPasswordAsync(user, loginDto.Password))
         {
             _logger.LogInformation("[AuthController] User {Username} logged in.", loginDto.Username);
             var token = await GenerateJwtToken(user);
@@ -61,7 +68,7 @@ public class AuthController : ControllerBase
         }
 
         _logger.LogWarning("[AuthController] Failed login attempt for {Username}.", loginDto.Username);
-        return Unauthorized("Wrong username/email or password. Please try again.");
+        return Unauthorized("Wrong password. Please try again.");
     }
 
     // With JWT the real logout happens in React, by deleting the token.

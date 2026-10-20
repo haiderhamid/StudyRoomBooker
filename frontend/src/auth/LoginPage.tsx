@@ -3,11 +3,13 @@ import type { FormEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Form, Button, Alert, Card, Spinner } from 'react-bootstrap';
 import { useAuth } from './useAuth';
+import { NotRegisteredError } from './AuthService';
 
 export default function LoginPage() {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [notRegistered, setNotRegistered] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -18,11 +20,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setNotRegistered(false);
     setIsSubmitting(true);
     try {
       await login({ username, password });
       navigate(returnTo, { replace: true });
     } catch (err) {
+      setNotRegistered(err instanceof NotRegisteredError);
       setError(err instanceof Error ? err.message : 'Login failed.');
     } finally {
       setIsSubmitting(false);
@@ -37,7 +41,19 @@ export default function LoginPage() {
       </header>
       <Card>
         <Card.Body>
-          {error && <Alert variant="danger">{error}</Alert>}
+          {error && (
+            <Alert variant="danger">
+              {error}
+              {notRegistered && (
+                <>
+                  {' '}
+                  <Link to="/register" state={{ email: username.includes('@') ? username : '' }} className="alert-link">
+                    Create an account
+                  </Link>
+                </>
+              )}
+            </Alert>
+          )}
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="username">

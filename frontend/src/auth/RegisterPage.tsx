@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Form, Button, Alert, Card, Spinner } from 'react-bootstrap';
 import type { RegisterDto } from '../types/auth';
 import * as AuthService from './AuthService';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState<RegisterDto>({ username: '', email: '', password: '' });
+  const location = useLocation();
+  // The email can come from the login page, so the user doesn't have to type it again.
+  const [formData, setFormData] = useState<RegisterDto>({ username: '', email: location.state?.email ?? '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

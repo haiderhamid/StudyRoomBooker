@@ -12,6 +12,13 @@
     <div class="card">
         <div class="card-body">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @if (ViewBag.NotRegistered == true)
+            {
+                <div class="alert alert-danger" role="alert">
+                    This email is not registered.
+                    <a asp-action="Register" asp-route-email="@Model.Email" class="alert-link">Create an account</a>
+                </div>
+            }
 
             <form asp-action="Login" method="post">
                 <input type="hidden" asp-for="ReturnUrl" />

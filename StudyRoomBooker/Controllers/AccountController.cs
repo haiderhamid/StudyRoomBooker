@@ -14,10 +14,11 @@ public class AccountController : Controller
         _logger = logger;
     }
 
+    // The email can come from the login page, so the user doesn't have to type it again.
     [HttpGet]
-    public IActionResult Register()
+    public IActionResult Register(string? email = null)
     {
-        return View();
+        return View(new RegisterViewModel { Email = email ?? string.Empty });
     }
 
     [HttpPost]
@@ -58,6 +59,13 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
+            // Tells the user when no account uses this email, so they know they have to register.
+            if (await _userManager.FindByEmailAsync(model.Email) == null)
+            {
+                ViewBag.NotRegistered = true;
+                return View(model);
+            }
+
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: false, lockoutOnFailure: false);
 
             if (result.Succeeded)

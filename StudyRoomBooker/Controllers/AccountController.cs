@@ -80,7 +80,7 @@ public class AccountController : Controller
                 return RedirectToAction("Index", "Home");
             }
 
-            ModelState.AddModelError("", "Wrong email or password. Please try again.");
+            ModelState.AddModelError("", "Wrong password. Please try again.");
         }
         return View(model);
     }

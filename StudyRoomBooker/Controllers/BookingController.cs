@@ -187,8 +187,9 @@ public class BookingController : Controller
         return booking.StartTime <= DateTime.Now && !User.IsInRole("Admin");
     }
 
-    // Checks the times: end after start, quarter hours, not in the past and between 7 am to 8 pm. 
-    private void ValidateTimes(Booking booking)
+    // Checks the times: end after start, quarter hours, not in the past and between 7 am to 8 pm.
+    // checkPast is false when an admin saves a started booking without moving its start time.
+    private void ValidateTimes(Booking booking, bool checkPast = true)
     {
         if (booking.EndTime <= booking.StartTime)
         {
@@ -200,7 +201,7 @@ public class BookingController : Controller
             ModelState.AddModelError("", "Bookings must start and end at :00, :15, :30 or :45.");
         }
 
-        if (booking.StartTime < DateTime.Now)
+        if (checkPast && booking.StartTime < DateTime.Now)
         {
             ModelState.AddModelError("", "You cannot book a time that has already passed.");
         }
@@ -360,13 +361,15 @@ public class BookingController : Controller
             return View("Started", booking);
         }
 
+        var originalStart = booking.StartTime;
         booking.RoomId = viewModel.Booking.RoomId;
         booking.Subject = viewModel.Booking.Subject;
         booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
         booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
         ModelState.Remove("Booking.BookedBy");
 
-        ValidateTimes(booking);
+        // Only check for a past start time if the start time was changed.
+        ValidateTimes(booking, booking.StartTime != originalStart);
         // If people have joined, the new room must still have a seat for everyone.
         var room = await _roomRepository.GetRoomById(booking.RoomId);
         if (room != null && room.Capacity < booking.SeatsTaken)

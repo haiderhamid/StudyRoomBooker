@@ -420,4 +420,29 @@ public class BookingControllerTests
         Assert.False(controller.ModelState.IsValid);
         _bookingRepositoryMock.Verify(r => r.Update(It.IsAny<Booking>()), Times.Never);
     }
+
+    [Fact]
+    public async Task Edit_AdminSavesStartedBooking_RedirectsToIndex()
+    {
+        // The booking started yesterday. The admin only changes the subject.
+        var booking = CreateBooking(1, "kari@oslomet.no");
+        booking.StartTime = DateTime.Today.AddDays(-1).AddHours(10);
+        booking.EndTime = DateTime.Today.AddDays(-1).AddHours(11);
+        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(booking);
+        _bookingRepositoryMock.Setup(r => r.IsRoomBooked(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
+        _bookingRepositoryMock.Setup(r => r.Update(It.IsAny<Booking>())).ReturnsAsync(true);
+        var controller = CreateController("admin@oslomet.no", "Admin");
+        var viewModel = new BookingViewModel
+        {
+            Booking = new Booking { Id = 1, RoomId = 1, Subject = "New subject" },
+            Date = booking.StartTime.Date,
+            FromTime = booking.StartTime.TimeOfDay,
+            ToTime = booking.EndTime.TimeOfDay
+        };
+
+        var result = await controller.Edit(1, viewModel);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        _bookingRepositoryMock.Verify(r => r.Update(It.Is<Booking>(b => b.Subject == "New subject")), Times.Once);
+    }
 }

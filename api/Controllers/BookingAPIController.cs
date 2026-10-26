@@ -86,9 +86,10 @@ public class BookingAPIController : ControllerBase
     }
 
     // Checks the times: not in the past, between 07:00 and 20:00, end after start, quarter hours, and no overlap.
-    private async Task ValidateBooking(Booking booking, int excludeBookingId)
+    // checkPast is false when an admin saves a started booking without moving its start time.
+    private async Task ValidateBooking(Booking booking, int excludeBookingId, bool checkPast = true)
     {
-        if (booking.StartTime < DateTime.Now)
+        if (checkPast && booking.StartTime < DateTime.Now)
         {
             ModelState.AddModelError("", "You cannot book a time that has already passed.");
         }
@@ -223,12 +224,14 @@ public class BookingAPIController : ControllerBase
         }
 
         // Copy the new values into the saved booking, so BookedBy stays the same.
+        var originalStart = booking.StartTime;
         booking.RoomId = bookingDto.RoomId;
         booking.Subject = bookingDto.Subject;
         booking.StartTime = bookingDto.StartTime;
         booking.EndTime = bookingDto.EndTime;
 
-        await ValidateBooking(booking, id);
+        // Only check for a past start time if the start time was changed.
+        await ValidateBooking(booking, id, booking.StartTime != originalStart);
         // If people have joined, the new room must still have a seat for everyone.
         var room = await _roomRepository.GetRoomById(booking.RoomId);
         if (room != null && room.Capacity < booking.SeatsTaken)

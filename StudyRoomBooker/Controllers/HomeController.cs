@@ -44,7 +44,7 @@ public class HomeController : Controller
             TimeOptions = timeOptions
         };
 
-        var rooms = await _roomRepository.Search(buildingId, minCapacity, null);
+        var rooms = await _roomRepository.Search(buildingId, minCapacity);
         if (rooms == null)
         {
             _logger.LogError("[HomeController] Room list not found while executing Search().");

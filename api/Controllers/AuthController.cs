@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -11,15 +10,12 @@ using Microsoft.IdentityModel.Tokens;
 public class AuthController : ControllerBase
 {
     private readonly UserManager<AuthUser> _userManager;
-    private readonly SignInManager<AuthUser> _signInManager;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<AuthUser> userManager, SignInManager<AuthUser> signInManager,
-        IConfiguration configuration, ILogger<AuthController> logger)
+    public AuthController(UserManager<AuthUser> userManager, IConfiguration configuration, ILogger<AuthController> logger)
     {
         _userManager = userManager;
-        _signInManager = signInManager;
         _configuration = configuration;
         _logger = logger;
     }
@@ -69,16 +65,6 @@ public class AuthController : ControllerBase
 
         _logger.LogWarning("[AuthController] Failed login attempt for {Username}.", loginDto.Username);
         return Unauthorized("Wrong password. Please try again.");
-    }
-
-    // With JWT the real logout happens in React, by deleting the token.
-    [Authorize]
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
-    {
-        await _signInManager.SignOutAsync();
-        _logger.LogInformation("[AuthController] User logged out.");
-        return Ok(new { Message = "Logout successful" });
     }
 
     // Makes the token React sends with every request. It holds the username and roles, and expires after 2 hours.

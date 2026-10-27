@@ -125,6 +125,26 @@ public class BookingRepository : IBookingRepository
         }
     }
 
+    // The most people in one booking in this room that has not ended yet. Returns -1 if the check fails.
+    public async Task<int> MostSeatsTaken(int roomId)
+    {
+        try
+        {
+            // AsNoTracking, because we only read here and the room is updated right after.
+            var seats = await _context.Bookings
+                .AsNoTracking()
+                .Where(b => b.RoomId == roomId && b.EndTime > DateTime.Now)
+                .Select(b => 1 + b.Participants!.Count)
+                .ToListAsync();
+            return seats.Count == 0 ? 0 : seats.Max();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[BookingRepository] MostSeatsTaken() failed for RoomId {RoomId}.", roomId);
+            return -1;
+        }
+    }
+
     public async Task<bool> AddParticipant(int bookingId, string userName)
     {
         try

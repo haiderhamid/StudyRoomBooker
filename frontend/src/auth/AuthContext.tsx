@@ -53,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isAdmin = user !== null && user[ROLE_CLAIM] === 'Admin';
 
   return (
-    <AuthContext.Provider value={{ user, token, isAdmin, isLoading: false, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAdmin, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -24,8 +24,6 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
 
-builder.Services.AddSession();
-
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -173,7 +171,6 @@ app.UseHttpsRedirection();
 app.UseRequestLocalization("en-GB");
 app.UseRouting();
 
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -183,6 +180,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

@@ -20,7 +20,7 @@ export default function RoomListPage() {
 
   const { data: rooms = [], isLoading, error } = useQuery<Room[], Error>({
     queryKey: ['rooms', buildingId, minCapacity],
-    queryFn: () => RoomService.fetchRooms({ buildingId, minCapacity, facilityId: '' }),
+    queryFn: () => RoomService.fetchRooms({ buildingId, minCapacity }),
   });
 
   const { data: buildings = [] } = useQuery<Building[], Error>({

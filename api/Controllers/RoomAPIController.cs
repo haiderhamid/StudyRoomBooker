@@ -33,9 +33,9 @@ public class RoomAPIController : ControllerBase
     }
 
     [HttpGet("roomlist")]
-    public async Task<IActionResult> RoomList(int? buildingId, int? minCapacity, int? facilityId)
+    public async Task<IActionResult> RoomList(int? buildingId, int? minCapacity)
     {
-        var rooms = await _roomRepository.Search(buildingId, minCapacity, facilityId);
+        var rooms = await _roomRepository.Search(buildingId, minCapacity);
         if (rooms == null)
         {
             _logger.LogError("[RoomAPIController] Room list not found while executing Search().");
@@ -102,6 +102,18 @@ public class RoomAPIController : ControllerBase
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} not found for update.", id);
             return NotFound("Room not found");
+        }
+
+        // The room can't get fewer seats than the people already in one of its bookings.
+        var seatsTaken = await _bookingRepository.MostSeatsTaken(id);
+        if (seatsTaken < 0)
+        {
+            return StatusCode(500, "Could not check the bookings for this room.");
+        }
+        if (roomDto.Capacity < seatsTaken)
+        {
+            ModelState.AddModelError("Capacity", $"A booking in this room has {seatsTaken} people, so the room needs at least {seatsTaken} seats.");
+            return ValidationProblem(ModelState);
         }
 
         var room = new Room

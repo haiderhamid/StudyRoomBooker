@@ -26,7 +26,7 @@ public class RoomController : Controller
     public async Task<IActionResult> Index(int? buildingId, int? minCapacity, List<int>? facilityIds)
     {
         var selectedFacilityIds = facilityIds ?? new List<int>();
-        var rooms = await _roomRepository.Search(buildingId, minCapacity, null);
+        var rooms = await _roomRepository.Search(buildingId, minCapacity);
         if (rooms == null)
         {
             _logger.LogError("[RoomController] Room list not found while executing Search().");
@@ -204,6 +204,17 @@ public class RoomController : Controller
         if (id != room.Id)
         {
             return NotFound();
+        }
+
+        // The room can't get fewer seats than the people already in one of its bookings.
+        var seatsTaken = await _bookingRepository.MostSeatsTaken(id);
+        if (seatsTaken < 0)
+        {
+            ModelState.AddModelError("", "Could not check the bookings for this room. Please try again.");
+        }
+        else if (room.Capacity < seatsTaken)
+        {
+            ModelState.AddModelError("Room.Capacity", $"A booking in this room has {seatsTaken} people, so the room needs at least {seatsTaken} seats.");
         }
 
         if (ModelState.IsValid)

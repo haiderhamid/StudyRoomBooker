@@ -4,14 +4,12 @@ import { API_URL, getAuthHeaders, handleResponse, handleEmptyResponse } from '..
 export interface RoomFilters {
   buildingId: string;
   minCapacity: string;
-  facilityId: string;
 }
 
 export async function fetchRooms(filters: RoomFilters): Promise<Room[]> {
   const params = new URLSearchParams();
   if (filters.buildingId) params.append('buildingId', filters.buildingId);
   if (filters.minCapacity) params.append('minCapacity', filters.minCapacity);
-  if (filters.facilityId) params.append('facilityId', filters.facilityId);
 
   const response = await fetch(`${API_URL}/api/roomapi/roomlist?${params.toString()}`);
   return handleResponse<Room[]>(response);

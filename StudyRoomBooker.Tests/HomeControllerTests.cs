@@ -42,7 +42,7 @@ public class HomeControllerTests
             }
         };
 
-        _roomRepositoryMock.Setup(r => r.Search(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>())).ReturnsAsync(rooms);
+        _roomRepositoryMock.Setup(r => r.Search(It.IsAny<int?>(), It.IsAny<int?>())).ReturnsAsync(rooms);
         _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(bookings);
         _buildingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Building>());
         _facilityRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Facility>());

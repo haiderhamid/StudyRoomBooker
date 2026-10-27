@@ -6,7 +6,6 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   isAdmin: boolean;
-  isLoading: boolean;
   login: (credentials: LoginDto) => Promise<void>;
   logout: () => void;
 }

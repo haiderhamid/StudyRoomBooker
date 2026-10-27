@@ -445,4 +445,22 @@ public class BookingControllerTests
         Assert.IsType<RedirectToActionResult>(result);
         _bookingRepositoryMock.Verify(r => r.Update(It.Is<Booking>(b => b.Subject == "New subject")), Times.Once);
     }
+
+    [Fact]
+    public async Task Create_WithExtraRoomAndParticipants_SavesOnlyFormFields()
+    {
+        // Someone adds a new room, a participant and an Id to the request. Only the form fields should be used.
+        _bookingRepositoryMock.Setup(r => r.IsRoomBooked(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
+        _bookingRepositoryMock.Setup(r => r.Create(It.IsAny<Booking>())).ReturnsAsync(true);
+        var controller = CreateController();
+        var viewModel = CreateValidViewModel();
+        viewModel.Booking.Id = 99;
+        viewModel.Booking.Room = new Room { RoomNumber = "FAKE", Capacity = 50, BuildingId = 1 };
+        viewModel.Booking.Participants = new List<BookingParticipant> { new BookingParticipant { UserName = "fake@oslomet.no" } };
+
+        await controller.Create(viewModel);
+
+        _bookingRepositoryMock.Verify(r => r.Create(It.Is<Booking>(b =>
+            b.Id == 0 && b.Room == null && b.Participants == null && b.RoomId == 1 && b.Subject == "Math")), Times.Once);
+    }
 }

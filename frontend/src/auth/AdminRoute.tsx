@@ -2,12 +2,8 @@ import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 export default function AdminRoute() {
-  const { token, isAdmin, isLoading } = useAuth();
+  const { token, isAdmin } = useAuth();
   const location = useLocation();
-
-  if (isLoading) {
-    return null;
-  }
 
   if (!token) {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;

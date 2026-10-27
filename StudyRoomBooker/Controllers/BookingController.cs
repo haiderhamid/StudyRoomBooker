@@ -267,12 +267,18 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
-        var booking = viewModel.Booking;
-        booking.StartTime = viewModel.Date.Date.Add(viewModel.FromTime);
-        booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
-        // BookedBy is set from the logged in user, not from the form, so that nobody can book in someone else's name. 
-        // Field is not in the form so it is removed from the validation. 
-        booking.BookedBy = User.Identity?.Name ?? string.Empty;
+        // A new booking is made with only the fields from the form. Anything else someone adds
+        // to the request, like a new room or participants, is ignored.
+        var booking = new Booking
+        {
+            RoomId = viewModel.Booking.RoomId,
+            Subject = viewModel.Booking.Subject,
+            StartTime = viewModel.Date.Date.Add(viewModel.FromTime),
+            EndTime = viewModel.Date.Date.Add(viewModel.ToTime),
+            // BookedBy is set from the logged in user, not from the form, so that nobody can book in someone else's name.
+            BookedBy = User.Identity?.Name ?? string.Empty
+        };
+        // Field is not in the form so it is removed from the validation.
         ModelState.Remove("Booking.BookedBy");
 
         ValidateTimes(booking);

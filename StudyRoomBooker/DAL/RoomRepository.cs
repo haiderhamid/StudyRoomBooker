@@ -101,7 +101,7 @@ public class RoomRepository : IRoomRepository
     }
 
     // Search with optional filters. A filter is only used if it has a value.
-    public async Task<IEnumerable<Room>?> Search(int? buildingId, int? minCapacity, int? facilityId)
+    public async Task<IEnumerable<Room>?> Search(int? buildingId, int? minCapacity)
     {
         try
         {
@@ -118,11 +118,6 @@ public class RoomRepository : IRoomRepository
             if (minCapacity.HasValue)
             {
                 query = query.Where(r => r.Capacity >= minCapacity.Value);
-            }
-
-            if (facilityId.HasValue)
-            {
-                query = query.Where(r => r.RoomFacilities!.Any(rf => rf.FacilityId == facilityId.Value));
             }
 
             return await query.ToListAsync();

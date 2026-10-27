@@ -73,4 +73,22 @@ public class RoomControllerTests
         Assert.Single(model.Schedule.Bookings);
         Assert.Equal("This week", model.Schedule.Bookings[0].Subject);
     }
+
+    [Fact]
+    public async Task Edit_CapacityBelowSeatsTaken_ReturnsViewWithError()
+    {
+        // A booking that has not ended has 3 people, so the room can't be changed to 2 seats.
+        _bookingRepositoryMock.Setup(r => r.MostSeatsTaken(1)).ReturnsAsync(3);
+        var viewModel = new RoomViewModel
+        {
+            Room = new Room { Id = 1, RoomNumber = "101", Capacity = 2, BuildingId = 1 }
+        };
+        var controller = CreateController();
+
+        var result = await controller.Edit(1, viewModel);
+
+        Assert.IsType<ViewResult>(result);
+        Assert.False(controller.ModelState.IsValid);
+        _roomRepositoryMock.Verify(r => r.Update(It.IsAny<Room>()), Times.Never);
+    }
 }

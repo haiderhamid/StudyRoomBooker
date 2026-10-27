@@ -54,7 +54,7 @@ export default function BookingForm({
 
   const { data: rooms = [] } = useQuery<Room[], Error>({
     queryKey: ['rooms', '', '', ''],
-    queryFn: () => RoomService.fetchRooms({ buildingId: '', minCapacity: '', facilityId: '' }),
+    queryFn: () => RoomService.fetchRooms({ buildingId: '', minCapacity: '' }),
   });
 
   const { data: bookings = [], error: bookingsError } = useQuery<Booking[], Error>({

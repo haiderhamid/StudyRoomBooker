@@ -78,7 +78,7 @@ public class BookingController : Controller
         }
         else
         {
-            TempData["Error"] = "Could not join the booking. Please try again.";
+            TempData["Error"] = "Could not join the booking. It may have just become full. Please try again.";
         }
         return RedirectToAction("Details", new { id });
     }
@@ -282,6 +282,11 @@ public class BookingController : Controller
         ModelState.Remove("Booking.BookedBy");
 
         ValidateTimes(booking);
+        // The room must exist, otherwise the database would refuse the booking.
+        if (await _roomRepository.GetRoomById(booking.RoomId) == null)
+        {
+            ModelState.AddModelError("Booking.RoomId", "Please choose a room from the list.");
+        }
         // Checks if the room is already booked at this time.
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
         {
@@ -296,7 +301,10 @@ public class BookingController : Controller
                 _logger.LogInformation("[BookingController] Booking created successfully for RoomId {RoomId}.", booking.RoomId);
                 return RedirectToAction("Index");
             }
-            ModelState.AddModelError("", "An unexpected error occurred while creating the booking. Please try again.");
+            // Create also fails if someone else booked the room at the same moment.
+            ModelState.AddModelError("", await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0)
+                ? "This room was just booked by someone else. Please choose another time."
+                : "An unexpected error occurred while creating the booking. Please try again.");
         }
 
         // The room list is not sent with the form so we load it again
@@ -378,7 +386,11 @@ public class BookingController : Controller
         ValidateTimes(booking, booking.StartTime != originalStart);
         // If people have joined, the new room must still have a seat for everyone.
         var room = await _roomRepository.GetRoomById(booking.RoomId);
-        if (room != null && room.Capacity < booking.SeatsTaken)
+        if (room == null)
+        {
+            ModelState.AddModelError("Booking.RoomId", "Please choose a room from the list.");
+        }
+        else if (room.Capacity < booking.SeatsTaken)
         {
             ModelState.AddModelError("", $"{booking.SeatsTaken} people are in this booking, but the room only has {room.Capacity} seats.");
         }
@@ -397,7 +409,10 @@ public class BookingController : Controller
                 _logger.LogInformation("[BookingController] Booking with Id {Id} updated successfully.", id);
                 return RedirectToAction("Index");
             }
-            ModelState.AddModelError("", "An unexpected error occurred while updating the booking. Please try again.");
+            // Update also fails if someone else booked the room at the same moment.
+            ModelState.AddModelError("", await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id)
+                ? "This room was just booked by someone else. Please choose another time."
+                : "An unexpected error occurred while updating the booking. Please try again.");
         }
 
         viewModel.RoomSelectList = await GetRoomSelectListAsync();

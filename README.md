@@ -8,6 +8,7 @@ The project contains two sub-applications that solve the same task:
 |---|---|
 | `StudyRoomBooker/` | Sub-app 1: ASP.NET Core 10 MVC (server-rendered views) |
 | `StudyRoomBooker.Tests/` | xUnit unit tests for the MVC controllers |
+| `api.Tests/` | xUnit unit tests for the API booking controller |
 | `api/` | Sub-app 2, backend: ASP.NET Core 10 Web API with JWT authentication |
 | `frontend/` | Sub-app 2, frontend: React + TypeScript (Vite) |
 
@@ -59,7 +60,14 @@ Open http://localhost:4000
 
 ## Run the unit tests
 
+Tests for sub-app 1 (MVC):
+
     cd StudyRoomBooker.Tests
+    dotnet test
+
+Tests for sub-app 2 (API):
+
+    cd api.Tests
     dotnet test
 
 ## Reset the databases

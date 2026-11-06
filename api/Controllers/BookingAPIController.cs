@@ -85,10 +85,16 @@ public class BookingAPIController : ControllerBase
         return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
-    // Checks the times: not in the past, between 07:00 and 20:00, end after start, quarter hours, and no overlap.
+    // Checks that the room exists, and the times: not in the past, between 07:00 and 20:00, end after start, quarter hours, and no overlap.
     // checkPast is false when an admin saves a started booking without moving its start time.
     private async Task ValidateBooking(Booking booking, int excludeBookingId, bool checkPast = true)
     {
+        // An unknown room gives 400 here, instead of a database error and 500 when saving.
+        if (await _roomRepository.GetRoomById(booking.RoomId) == null)
+        {
+            ModelState.AddModelError("RoomId", "The room does not exist.");
+        }
+
         if (checkPast && booking.StartTime < DateTime.Now)
         {
             ModelState.AddModelError("", "You cannot book a time that has already passed.");
@@ -190,6 +196,11 @@ public class BookingAPIController : ControllerBase
             return CreatedAtAction(nameof(GetBooking), new { id = newBooking.Id }, ToDto(newBooking));
         }
 
+        // Create also fails if someone else booked the room at the same moment.
+        if (await _bookingRepository.IsRoomBooked(newBooking.RoomId, newBooking.StartTime, newBooking.EndTime, 0))
+        {
+            return Conflict("This room was just booked by someone else. Please choose another time.");
+        }
         _logger.LogWarning("[BookingAPIController] Booking creation failed for RoomId {RoomId}.", newBooking.RoomId);
         return StatusCode(500, "Internal server error");
     }
@@ -251,6 +262,11 @@ public class BookingAPIController : ControllerBase
             return Ok(ToDto(booking));
         }
 
+        // Update also fails if someone else booked the room at the same moment.
+        if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, id))
+        {
+            return Conflict("This room was just booked by someone else. Please choose another time.");
+        }
         _logger.LogWarning("[BookingAPIController] Booking with Id {Id} could not be updated.", id);
         return StatusCode(500, "Internal server error");
     }
@@ -309,8 +325,9 @@ public class BookingAPIController : ControllerBase
         bool returnOk = await _bookingRepository.AddParticipant(id, userName);
         if (!returnOk)
         {
+            // Most likely someone else took the last seat at the same moment.
             _logger.LogWarning("[BookingAPIController] {User} could not join booking {Id}.", userName, id);
-            return StatusCode(500, "Internal server error");
+            return Conflict("Could not join the booking. It may have just become full. Please try again.");
         }
 
         _logger.LogInformation("[BookingAPIController] {User} joined booking {Id}.", userName, id);

@@ -14,6 +14,12 @@ public class BookingControllerTests
 
     private static readonly DateTime NextWeek = DateTime.Today.AddDays(7);
 
+    public BookingControllerTests()
+    {
+        // The room exists in every test, unless a test sets up something else.
+        _roomRepositoryMock.Setup(r => r.GetRoomById(It.IsAny<int>())).ReturnsAsync(new Room { Id = 1, RoomNumber = "101", Capacity = 4 });
+    }
+
     private BookingController CreateController(string userName = "test@oslomet.no", string role = "Student")
     {
         var claims = new List<Claim>
@@ -462,5 +468,20 @@ public class BookingControllerTests
 
         _bookingRepositoryMock.Verify(r => r.Create(It.Is<Booking>(b =>
             b.Id == 0 && b.Room == null && b.Participants == null && b.RoomId == 1 && b.Subject == "Math")), Times.Once);
+    }
+
+    [Fact]
+    public async Task Create_RoomDoesNotExist_ReturnsViewWithError()
+    {
+        // Someone sends a room id that is not in the database.
+        _roomRepositoryMock.Setup(r => r.GetRoomById(It.IsAny<int>())).ReturnsAsync((Room?)null);
+        _bookingRepositoryMock.Setup(r => r.IsRoomBooked(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
+        var controller = CreateController();
+
+        var result = await controller.Create(CreateValidViewModel());
+
+        Assert.IsType<ViewResult>(result);
+        Assert.False(controller.ModelState.IsValid);
+        _bookingRepositoryMock.Verify(r => r.Create(It.IsAny<Booking>()), Times.Never);
     }
 }

@@ -43,12 +43,23 @@ public class BookingRepository : IBookingRepository
         }
     }
 
+    // Returns false if the room was booked by someone else at the same moment, or if saving fails.
     public async Task<bool> Create(Booking booking)
     {
         try
         {
+            // The overlap check and the save run in one transaction. SQLite lets only one transaction
+            // write at a time, so two requests for the same room and time can't both get it.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            if (await IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
+            {
+                _logger.LogWarning("[BookingRepository] Create() stopped, RoomId {RoomId} was just booked by someone else.", booking.RoomId);
+                return false;
+            }
+
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return true;
         }
         catch (Exception ex)
@@ -58,12 +69,22 @@ public class BookingRepository : IBookingRepository
         }
     }
 
+    // Returns false if the new time was booked by someone else at the same moment, or if saving fails.
     public async Task<bool> Update(Booking booking)
     {
         try
         {
+            // Same as in Create: check and save in one transaction.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            if (await IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
+            {
+                _logger.LogWarning("[BookingRepository] Update() stopped, RoomId {RoomId} was just booked by someone else.", booking.RoomId);
+                return false;
+            }
+
             _context.Bookings.Update(booking);
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return true;
         }
         catch (Exception ex)
@@ -145,12 +166,27 @@ public class BookingRepository : IBookingRepository
         }
     }
 
+    // Returns false if the booking became full at the same moment, or if saving fails.
     public async Task<bool> AddParticipant(int bookingId, string userName)
     {
         try
         {
+            // The seat check and the save run in one transaction, so two students can't both take the last seat.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var capacity = await _context.Bookings
+                .Where(b => b.Id == bookingId)
+                .Select(b => b.Room!.Capacity)
+                .FirstOrDefaultAsync();
+            var seatsTaken = 1 + await _context.BookingParticipants.CountAsync(p => p.BookingId == bookingId);
+            if (seatsTaken >= capacity)
+            {
+                _logger.LogWarning("[BookingRepository] AddParticipant() stopped, booking {BookingId} is full.", bookingId);
+                return false;
+            }
+
             _context.BookingParticipants.Add(new BookingParticipant { BookingId = bookingId, UserName = userName });
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return true;
         }
         catch (Exception ex)

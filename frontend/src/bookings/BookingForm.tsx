@@ -160,7 +160,7 @@ export default function BookingForm({
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="date">
-              <Form.Label>Date</Form.Label>
+              <Form.Label className="required">Date</Form.Label>
               <DatePicker
                 id="date"
                 value={date}
@@ -174,7 +174,7 @@ export default function BookingForm({
             <Row>
               <Col>
                 <Form.Group controlId="fromTime">
-                  <Form.Label>Start time</Form.Label>
+                  <Form.Label className="required">Start time</Form.Label>
                   <Form.Select
                     value={fromTime}
                     onChange={e => handleFromTimeChange(e.target.value)}
@@ -190,7 +190,7 @@ export default function BookingForm({
               </Col>
               <Col>
                 <Form.Group controlId="toTime">
-                  <Form.Label>End time</Form.Label>
+                  <Form.Label className="required">End time</Form.Label>
                   <Form.Select
                     value={toTime}
                     onChange={e => setToTime(e.target.value)}

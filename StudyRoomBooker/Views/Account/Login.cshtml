@@ -23,12 +23,12 @@
             <form asp-action="Login" method="post">
                 <input type="hidden" asp-for="ReturnUrl" />
                 <div class="mb-3">
-                    <label asp-for="Email" class="form-label">Email</label>
+                    <label asp-for="Email" class="form-label required">Email</label>
                     <input asp-for="Email" class="form-control" autocomplete="username" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
                 <div>
-                    <label asp-for="Password" class="form-label">Password</label>
+                    <label asp-for="Password" class="form-label required">Password</label>
                     <input asp-for="Password" class="form-control" autocomplete="current-password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>

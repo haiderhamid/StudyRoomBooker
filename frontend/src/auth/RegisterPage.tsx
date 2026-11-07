@@ -54,7 +54,7 @@ export default function RegisterPage() {
 
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="username">
-              <Form.Label>Username</Form.Label>
+              <Form.Label className="required">Username</Form.Label>
               <Form.Control
                 name="username"
                 value={formData.username}
@@ -65,7 +65,7 @@ export default function RegisterPage() {
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="email">
-              <Form.Label>Email</Form.Label>
+              <Form.Label className="required">Email</Form.Label>
               <Form.Control
                 type="email"
                 name="email"
@@ -77,7 +77,7 @@ export default function RegisterPage() {
             </Form.Group>
 
             <Form.Group controlId="password">
-              <Form.Label>Password</Form.Label>
+              <Form.Label className="required">Password</Form.Label>
               <Form.Control
                 type="password"
                 name="password"

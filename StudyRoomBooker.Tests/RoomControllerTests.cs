@@ -21,6 +21,12 @@ public class RoomControllerTests
     public async Task Create_ValidRoom_RedirectsToIndex()
     {
         _roomRepositoryMock.Setup(r => r.Create(It.IsAny<Room>())).ReturnsAsync(true);
+        _buildingRepositoryMock.Setup(r => r.GetBuildingById(1)).ReturnsAsync(new Building { Id = 1, Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" });
+        _facilityRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Facility>
+        {
+            new Facility { Id = 1, Name = "Whiteboard" },
+            new Facility { Id = 2, Name = "Projector" }
+        });
         var viewModel = new RoomViewModel
         {
             Room = new Room { RoomNumber = "301", Capacity = 4, BuildingId = 1 },

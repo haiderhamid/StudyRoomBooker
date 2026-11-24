@@ -7,13 +7,32 @@ public class RoomAPIController : ControllerBase
 {
     private readonly IRoomRepository _roomRepository;
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBuildingRepository _buildingRepository;
+    private readonly IFacilityRepository _facilityRepository;
     private readonly ILogger<RoomAPIController> _logger;
 
-    public RoomAPIController(IRoomRepository roomRepository, IBookingRepository bookingRepository, ILogger<RoomAPIController> logger)
+    public RoomAPIController(IRoomRepository roomRepository, IBookingRepository bookingRepository,
+        IBuildingRepository buildingRepository, IFacilityRepository facilityRepository, ILogger<RoomAPIController> logger)
     {
         _roomRepository = roomRepository;
         _bookingRepository = bookingRepository;
+        _buildingRepository = buildingRepository;
+        _facilityRepository = facilityRepository;
         _logger = logger;
+    }
+
+    // The building and the equipment must exist. A wrong id gives 400 here, instead of a database error and 500 when saving.
+    private async Task ValidateReferences(RoomDto roomDto)
+    {
+        if (roomDto.BuildingId > 0 && await _buildingRepository.GetBuildingById(roomDto.BuildingId) == null)
+        {
+            ModelState.AddModelError("BuildingId", "The building does not exist.");
+        }
+        var existingIds = (await _facilityRepository.GetAll() ?? new List<Facility>()).Select(f => f.Id);
+        if (roomDto.FacilityIds.Except(existingIds).Any())
+        {
+            ModelState.AddModelError("FacilityIds", "One or more facilities do not exist.");
+        }
     }
 
     // Turns a Room into a RoomDto, so the API only sends what React needs.
@@ -66,6 +85,12 @@ public class RoomAPIController : ControllerBase
             return BadRequest("Room cannot be null");
         }
 
+        await ValidateReferences(roomDto);
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
         var newRoom = new Room
         {
             RoomNumber = roomDto.RoomNumber,
@@ -102,6 +127,12 @@ public class RoomAPIController : ControllerBase
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} not found for update.", id);
             return NotFound("Room not found");
+        }
+
+        await ValidateReferences(roomDto);
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
         }
 
         // The room can't get fewer seats than the people already in one of its bookings.

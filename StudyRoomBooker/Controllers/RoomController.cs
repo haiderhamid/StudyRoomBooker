@@ -139,6 +139,20 @@ public class RoomController : Controller
         viewModel.AllFacilities = facilities.ToList();
     }
 
+    // The building and the equipment must exist, otherwise the database refuses the room.
+    private async Task ValidateReferences(Room room, List<int> facilityIds)
+    {
+        if (room.BuildingId > 0 && await _buildingRepository.GetBuildingById(room.BuildingId) == null)
+        {
+            ModelState.AddModelError("Room.BuildingId", "Please choose a building from the list.");
+        }
+        var existingIds = (await _facilityRepository.GetAll() ?? new List<Facility>()).Select(f => f.Id);
+        if (facilityIds.Except(existingIds).Any())
+        {
+            ModelState.AddModelError("", "Please choose equipment from the list.");
+        }
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Create()
@@ -154,6 +168,7 @@ public class RoomController : Controller
     public async Task<IActionResult> Create(RoomViewModel viewModel)
     {
         var room = viewModel.Room;
+        await ValidateReferences(room, viewModel.SelectedFacilityIds);
 
         if (ModelState.IsValid)
         {
@@ -216,6 +231,8 @@ public class RoomController : Controller
         {
             ModelState.AddModelError("Room.Capacity", $"A booking in this room has {seatsTaken} people, so the room needs at least {seatsTaken} seats.");
         }
+
+        await ValidateReferences(room, viewModel.SelectedFacilityIds);
 
         if (ModelState.IsValid)
         {

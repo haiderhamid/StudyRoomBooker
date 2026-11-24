@@ -62,6 +62,7 @@ public class AccountController : Controller
             // Tells the user when no account uses this email, so they know they have to register.
             if (await _userManager.FindByEmailAsync(model.Email) == null)
             {
+                _logger.LogWarning("[AccountController] Login attempt for unknown email {Email}.", model.Email);
                 ViewBag.NotRegistered = true;
                 return View(model);
             }
@@ -80,6 +81,7 @@ public class AccountController : Controller
                 return RedirectToAction("Index", "Home");
             }
 
+            _logger.LogWarning("[AccountController] Failed login attempt for {Email}.", model.Email);
             ModelState.AddModelError("", "Wrong password. Please try again.");
         }
         return View(model);

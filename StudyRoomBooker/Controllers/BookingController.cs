@@ -181,6 +181,14 @@ public class BookingController : Controller
         return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
+    // Logs when a user tries to change or delete a booking they don't own, then returns 403.
+    private IActionResult ForbidAndLog(int id, string action)
+    {
+        _logger.LogWarning("[BookingController] {User} tried to {Action} booking {Id} without permission.",
+            User.Identity?.Name, action, id);
+        return Forbid();
+    }
+
     // Students can't change or delete a booking after it has started. Admins can. 
     private bool HasStarted(Booking booking)
     {
@@ -326,7 +334,7 @@ public class BookingController : Controller
 
         if (!CanManage(booking))
         {
-            return Forbid();
+            return ForbidAndLog(id, "edit");
         }
 
         if (HasStarted(booking))
@@ -366,7 +374,7 @@ public class BookingController : Controller
 
         if (!CanManage(booking))
         {
-            return Forbid();
+            return ForbidAndLog(id, "edit");
         }
 
         if (HasStarted(booking))
@@ -433,7 +441,7 @@ public class BookingController : Controller
 
         if (!CanManage(booking))
         {
-            return Forbid();
+            return ForbidAndLog(id, "delete");
         }
 
         ViewBag.HasStarted = HasStarted(booking);
@@ -455,7 +463,7 @@ public class BookingController : Controller
 
         if (!CanManage(booking))
         {
-            return Forbid();
+            return ForbidAndLog(id, "delete");
         }
 
         if (HasStarted(booking))

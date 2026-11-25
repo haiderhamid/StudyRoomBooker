@@ -1,13 +1,23 @@
+import { useState } from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import AuthSection from '../auth/AuthSection';
 import { useAuth } from '../auth/useAuth';
 
 export default function NavMenu() {
   const { user, isAdmin } = useAuth();
+  const location = useLocation();
+  // The mobile menu is opened and closed by us, so it can close when the user goes to another page.
+  // Otherwise it stays open on top of the new page.
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const [menuLocation, setMenuLocation] = useState<string>(location.key);
+  if (location.key !== menuLocation) {
+    setMenuLocation(location.key);
+    setExpanded(false);
+  }
 
   return (
-    <Navbar expand="md" sticky="top" className="srb-navbar">
+    <Navbar expand="md" sticky="top" className="srb-navbar" expanded={expanded} onToggle={setExpanded}>
       <Container>
         <Navbar.Brand as={Link} to="/">StudyRoomBooker</Navbar.Brand>
         <Navbar.Toggle aria-controls="main-nav" />

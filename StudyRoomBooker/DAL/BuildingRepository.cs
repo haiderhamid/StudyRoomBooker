@@ -30,7 +30,10 @@ public class BuildingRepository : IBuildingRepository
     {
         try
         {
+            // AsNoTracking because we only read here. Otherwise the building's rooms stay tracked,
+            // and saving an edited room in the same request fails with a tracking conflict.
             return await _context.Buildings
+                .AsNoTracking()
                 .Include(b => b.Rooms)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }

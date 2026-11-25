@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Spinner, Alert } from 'react-bootstrap';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
@@ -28,6 +28,17 @@ export default function BookingListPage() {
   const [view, setView] = useState<View>('upcoming');
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  // A confirmation sent by the page we came from (create, edit or delete), or set by an action on this page.
+  const [message, setMessage] = useState<string | null>(location.state?.message ?? null);
+
+  // Removes the message from the browser history, so it is not shown again after a reload.
+  useEffect(() => {
+    if (location.state?.message) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   const { data: bookings = [], isLoading, error } = useQuery<Booking[], Error>({
     queryKey: ['bookings', 'mine', user?.sub ?? ''],
@@ -38,6 +49,7 @@ export default function BookingListPage() {
     mutationFn: BookingService.deleteBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      setMessage('The booking has been deleted.');
     },
   });
 
@@ -45,6 +57,7 @@ export default function BookingListPage() {
     mutationFn: BookingService.leaveBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      setMessage('You have left the booking.');
     },
   });
 
@@ -103,6 +116,12 @@ export default function BookingListPage() {
           Past
         </button>
       </div>
+
+      {message && (
+        <Alert variant="success" dismissible onClose={() => setMessage(null)}>
+          {message}
+        </Alert>
+      )}
 
       {deleteMutation.error && (
         <Alert variant="danger" dismissible onClose={() => deleteMutation.reset()}>

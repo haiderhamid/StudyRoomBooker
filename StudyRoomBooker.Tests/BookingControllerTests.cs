@@ -128,6 +128,7 @@ public class BookingControllerTests
 
         var redirectResult = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Index", redirectResult.ActionName);
+        Assert.Equal("Your booking has been created.", controller.TempData["Message"]);
         _bookingRepositoryMock.Verify(r => r.Create(It.IsAny<Booking>()), Times.Once);
     }
 
@@ -294,7 +295,22 @@ public class BookingControllerTests
 
         var redirectResult = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Index", redirectResult.ActionName);
+        Assert.Equal("The booking has been deleted.", controller.TempData["Message"]);
         _bookingRepositoryMock.Verify(r => r.Delete(1), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteConfirmed_DatabaseFails_ShowsError()
+    {
+        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
+        _bookingRepositoryMock.Setup(r => r.Delete(1)).ReturnsAsync(false);
+        var controller = CreateController();
+
+        var result = await controller.DeleteConfirmed(1);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.Null(controller.TempData["Message"]);
+        Assert.Equal("The booking could not be deleted. Please try again.", controller.TempData["Error"]);
     }
 
     [Fact]
@@ -482,6 +498,7 @@ public class BookingControllerTests
         var result = await controller.Edit(1, viewModel);
 
         Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Your changes have been saved.", controller.TempData["Message"]);
         _bookingRepositoryMock.Verify(r => r.Update(It.Is<Booking>(b => b.Subject == "New subject")), Times.Once);
     }
 

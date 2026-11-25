@@ -32,7 +32,7 @@ export default function BookingDetailsPage() {
     mutationFn: BookingService.deleteBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      navigate('/bookings');
+      navigate('/bookings', { state: { message: 'The booking has been deleted.' } });
     },
   });
 
@@ -117,6 +117,7 @@ export default function BookingDetailsPage() {
 
       {actionError && <Alert variant="danger">{actionError.message}</Alert>}
       {joinMutation.isSuccess && booking.isJoined && <Alert variant="success">You have joined this booking.</Alert>}
+      {leaveMutation.isSuccess && !booking.isJoined && <Alert variant="success">You have left this booking.</Alert>}
 
       <div className="card">
         <div className="card-body">

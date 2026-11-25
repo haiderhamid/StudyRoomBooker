@@ -337,6 +337,7 @@ public class BookingController : Controller
             if (created)
             {
                 _logger.LogInformation("[BookingController] Booking created successfully for RoomId {RoomId}.", booking.RoomId);
+                TempData["Message"] = "Your booking has been created.";
                 return RedirectToAction("Index");
             }
             // Create also fails if someone else booked the room at the same moment.
@@ -453,6 +454,7 @@ public class BookingController : Controller
             if (updated)
             {
                 _logger.LogInformation("[BookingController] Booking with Id {Id} updated successfully.", id);
+                TempData["Message"] = "Your changes have been saved.";
                 return RedirectToAction("Index");
             }
             // Update also fails if someone else booked the room at the same moment.
@@ -513,10 +515,12 @@ public class BookingController : Controller
         if (deleted)
         {
             _logger.LogInformation("[BookingController] Booking with Id {Id} deleted successfully.", id);
+            TempData["Message"] = "The booking has been deleted.";
         }
         else
         {
             _logger.LogWarning("[BookingController] Booking with Id {Id} could not be deleted.", id);
+            TempData["Error"] = "The booking could not be deleted. Please try again.";
         }
         return RedirectToAction("Index");
     }

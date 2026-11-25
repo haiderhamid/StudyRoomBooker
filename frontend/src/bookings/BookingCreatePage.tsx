@@ -13,7 +13,7 @@ export default function BookingCreatePage() {
     mutationFn: BookingService.createBooking,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      navigate('/bookings');
+      navigate('/bookings', { state: { message: 'Your booking has been created.' } });
     },
   });
 

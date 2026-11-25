@@ -25,7 +25,7 @@ export default function BookingUpdatePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
-      navigate('/bookings');
+      navigate('/bookings', { state: { message: 'Your changes have been saved.' } });
     },
   });
 

@@ -5,6 +5,7 @@ import { Spinner, Alert } from 'react-bootstrap';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
 import { useAuth } from '../auth/useAuth';
+import { isValidId } from '../shared/apiHelpers';
 
 export default function BookingDetailsPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -16,7 +17,8 @@ export default function BookingDetailsPage() {
   const { data: booking, isLoading, error } = useQuery<Booking, Error>({
     queryKey: ['booking', bookingId, user?.sub ?? ''],
     queryFn: () => BookingService.fetchBookingById(bookingId!),
-    enabled: !!bookingId,
+    // A non-numeric id is never fetched, so the page shows "not found" straight away.
+    enabled: isValidId(bookingId),
   });
 
   // Join and leave work the same way, so they share what happens afterwards.

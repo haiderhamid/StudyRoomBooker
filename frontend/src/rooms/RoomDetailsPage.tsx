@@ -10,6 +10,7 @@ import { useAuth } from '../auth/useAuth';
 import { addDays, startOfWeek, toDateString } from '../shared/dateTime';
 import RoomTags from '../shared/RoomTags';
 import WeekSchedule from './WeekSchedule';
+import { isValidId } from '../shared/apiHelpers';
 
 export default function RoomDetailsPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -19,7 +20,8 @@ export default function RoomDetailsPage() {
   const { data: room, isLoading, error } = useQuery<Room, Error>({
     queryKey: ['room', roomId],
     queryFn: () => RoomService.fetchRoomById(roomId!),
-    enabled: !!roomId,
+    // A non-numeric id is never fetched, so the page shows "not found" straight away.
+    enabled: isValidId(roomId),
   });
 
   const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery<Booking[], Error>({

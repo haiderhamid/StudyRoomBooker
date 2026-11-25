@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Container } from 'react-bootstrap';
 import { AuthProvider } from './auth/AuthContext';
+import { ApiError } from './shared/apiHelpers';
 import ProtectedRoute from './auth/ProtectedRoute';
 import AdminRoute from './auth/AdminRoute';
 import LoginPage from './auth/LoginPage';
@@ -22,7 +23,16 @@ import BookingCreatePage from './bookings/BookingCreatePage';
 import BookingUpdatePage from './bookings/BookingUpdatePage';
 import BookingDetailsPage from './bookings/BookingDetailsPage';
 
-const queryClient = new QueryClient();
+// Errors like 404 Not Found won't change if the request is sent again, so only other errors are retried.
+// Without this a missing booking showed a spinner for about 7 seconds before the error.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) =>
+        !(error instanceof ApiError && error.status >= 400 && error.status < 500) && failureCount < 3,
+    },
+  },
+});
 
 export default function App() {
   return (

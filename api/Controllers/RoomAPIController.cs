@@ -97,7 +97,9 @@ public class RoomAPIController : ControllerBase
             Capacity = roomDto.Capacity,
             BuildingId = roomDto.BuildingId,
             // Links the room to the chosen equipment (the many-to-many table).
+            // Distinct, so the same equipment sent twice is only saved once.
             RoomFacilities = roomDto.FacilityIds
+                .Distinct()
                 .Select(facilityId => new RoomFacility { FacilityId = facilityId })
                 .ToList()
         };
@@ -153,7 +155,9 @@ public class RoomAPIController : ControllerBase
             RoomNumber = roomDto.RoomNumber,
             Capacity = roomDto.Capacity,
             BuildingId = roomDto.BuildingId,
+            // Distinct, so the same equipment sent twice is only saved once.
             RoomFacilities = roomDto.FacilityIds
+                .Distinct()
                 .Select(facilityId => new RoomFacility { RoomId = id, FacilityId = facilityId })
                 .ToList()
         };

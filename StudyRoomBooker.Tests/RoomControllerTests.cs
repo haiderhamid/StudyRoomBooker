@@ -42,6 +42,24 @@ public class RoomControllerTests
     }
 
     [Fact]
+    public async Task Create_SameEquipmentTwice_SavesItOnce()
+    {
+        _roomRepositoryMock.Setup(r => r.Create(It.IsAny<Room>())).ReturnsAsync(true);
+        _buildingRepositoryMock.Setup(r => r.GetBuildingById(1)).ReturnsAsync(new Building { Id = 1, Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" });
+        _facilityRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Facility> { new Facility { Id = 1, Name = "Whiteboard" } });
+        var viewModel = new RoomViewModel
+        {
+            Room = new Room { RoomNumber = "301", Capacity = 4, BuildingId = 1 },
+            SelectedFacilityIds = new List<int> { 1, 1 }
+        };
+        var controller = CreateController();
+
+        await controller.Create(viewModel);
+
+        _roomRepositoryMock.Verify(r => r.Create(It.Is<Room>(room => room.RoomFacilities!.Count == 1)), Times.Once);
+    }
+
+    [Fact]
     public async Task DeleteConfirmed_RoomWithBookings_ReturnsDeleteView()
     {
         var room = new Room { Id = 1, RoomNumber = "101", Capacity = 4, BuildingId = 1 };

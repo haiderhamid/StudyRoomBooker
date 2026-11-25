@@ -186,7 +186,9 @@ public class RoomController : Controller
 
         if (ModelState.IsValid)
         {
+            // Distinct, so the same equipment sent twice is only saved once.
             room.RoomFacilities = viewModel.SelectedFacilityIds
+                .Distinct()
                 .Select(facilityId => new RoomFacility { FacilityId = facilityId })
                 .ToList();
 
@@ -250,7 +252,9 @@ public class RoomController : Controller
 
         if (ModelState.IsValid)
         {
+            // Distinct, so the same equipment sent twice is only saved once.
             room.RoomFacilities = viewModel.SelectedFacilityIds
+                .Distinct()
                 .Select(facilityId => new RoomFacility { RoomId = room.Id, FacilityId = facilityId })
                 .ToList();
 

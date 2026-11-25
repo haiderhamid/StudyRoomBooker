@@ -31,6 +31,7 @@ public class BuildingControllerTests
     [Fact]
     public async Task Edit_ValidViewModel_UpdatesOnlyFormFields()
     {
+        _buildingRepositoryMock.Setup(r => r.GetBuildingById(1)).ReturnsAsync(new Building { Id = 1, Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" });
         _buildingRepositoryMock.Setup(r => r.Update(It.IsAny<Building>())).ReturnsAsync(true);
         var viewModel = new BuildingViewModel { Id = 1, Name = "Pilestredet 36", Address = "Pilestredet 36, Oslo", RoomCount = 99 };
         var controller = CreateController();
@@ -40,6 +41,18 @@ public class BuildingControllerTests
         Assert.IsType<RedirectToActionResult>(result);
         _buildingRepositoryMock.Verify(r => r.Update(It.Is<Building>(b =>
             b.Id == 1 && b.Name == "Pilestredet 36" && b.Address == "Pilestredet 36, Oslo" && b.Rooms == null)), Times.Once);
+    }
+
+    [Fact]
+    public async Task Edit_UnknownId_ReturnsNotFound()
+    {
+        _buildingRepositoryMock.Setup(r => r.GetBuildingById(999)).ReturnsAsync((Building?)null);
+        var controller = CreateController();
+
+        var result = await controller.Edit(999, new BuildingViewModel { Id = 999, Name = "X", Address = "Y" });
+
+        Assert.IsType<NotFoundResult>(result);
+        _buildingRepositoryMock.Verify(r => r.Update(It.IsAny<Building>()), Times.Never);
     }
 
     [Fact]

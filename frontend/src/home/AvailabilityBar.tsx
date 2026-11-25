@@ -9,6 +9,8 @@ interface AvailabilityBarProps {
   bookings: Booking[];
   selectedFrom?: string;
   selectedTo?: string;
+  // True for today. The hours that have passed are greyed out, so they don't look free.
+  showPast?: boolean;
 }
 
 function timeToMinutes(time: string): number {
@@ -20,7 +22,9 @@ function toPercent(minutes: number): number {
   return ((minutes - DAY_START) / DAY_LENGTH) * 100;
 }
 
-export default function AvailabilityBar({ bookings, selectedFrom, selectedTo }: AvailabilityBarProps) {
+export default function AvailabilityBar({ bookings, selectedFrom, selectedTo, showPast }: AvailabilityBarProps) {
+  const now = new Date();
+  const nowMinutes = Math.min(Math.max(now.getHours() * 60 + now.getMinutes(), DAY_START), DAY_END);
   const description = bookings.length === 0
     ? 'Free all day.'
     : `Booked ${bookings.map(b => `${b.startTime.substring(11, 16)} to ${b.endTime.substring(11, 16)}`).join(', ')}.`;
@@ -28,6 +32,7 @@ export default function AvailabilityBar({ bookings, selectedFrom, selectedTo }: 
   return (
     <div className="availability">
       <div className="availability-track">
+        {showPast && <span className="availability-past" style={{ width: `${toPercent(nowMinutes)}%` }} />}
         {bookings.map(booking => {
           const start = Math.max(timeToMinutes(booking.startTime.substring(11, 16)), DAY_START);
           const end = Math.min(timeToMinutes(booking.endTime.substring(11, 16)), DAY_END);

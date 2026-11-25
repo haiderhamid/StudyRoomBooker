@@ -499,6 +499,10 @@ a.item-title:hover {
   background-color: var(--srb-open);
 }
 
+.legend-swatch-past {
+  background-color: var(--srb-track);
+}
+
 .legend-swatch-selected {
   background-color: transparent;
   box-shadow: inset 0 0 0 2px var(--srb-text);
@@ -617,6 +621,15 @@ a.item-title:hover {
   top: 0;
   bottom: 0;
   background-color: var(--srb-booked);
+}
+
+/* The part of today that has already passed, so it doesn't look free. */
+.availability-past {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: var(--srb-track);
 }
 
 .availability-selected {

@@ -4,6 +4,8 @@
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
     var hourMarks = Enumerable.Range(HomeViewModel.DayStartHour, HomeViewModel.DayEndHour - HomeViewModel.DayStartHour + 1);
     var dateValue = Model.Date.ToString("yyyy-MM-dd");
+    // On today's timeline the hours that have passed are greyed out.
+    var isToday = Model.Date == DateTime.Today;
 }
 
 <section class="hero">
@@ -92,6 +94,13 @@
             <span class="legend-swatch" aria-hidden="true"></span>
             Booked
         </span>
+        @if (isToday)
+        {
+            <span class="legend">
+                <span class="legend-swatch legend-swatch-past" aria-hidden="true"></span>
+                Passed
+            </span>
+        }
         @if (Model.HasTime)
         {
             <span class="legend">
@@ -143,6 +152,10 @@
             @* Timeline for the day. Each booking is placed by its start time and width in percent. *@
             <div class="availability">
                 <div class="availability-track">
+                    @if (isToday)
+                    {
+                        <span class="availability-past" style="width: @HomeViewModel.PercentOfDay(DateTime.Now.TimeOfDay)%"></span>
+                    }
                     @foreach (var booking in item.Bookings)
                     {
                         var start = booking.StartTime.TimeOfDay;
@@ -186,9 +199,18 @@
                 }
             </span>
 
-            <a asp-controller="Booking" asp-action="Create" asp-route-roomId="@room.Id" asp-route-date="@dateValue"
-               asp-route-from="@(Model.HasTime ? Model.FromTime : null)" asp-route-to="@(Model.HasTime ? Model.ToTime : null)"
-               class="btn btn-sm btn-primary">Book</a>
+            @* A room that is booked at the chosen time opens the form without that time, so the user picks another. *@
+            @if (Model.HasTime && !item.IsFree)
+            {
+                <a asp-controller="Booking" asp-action="Create" asp-route-roomId="@room.Id" asp-route-date="@dateValue"
+                   class="btn btn-sm btn-outline-secondary">Other time</a>
+            }
+            else
+            {
+                <a asp-controller="Booking" asp-action="Create" asp-route-roomId="@room.Id" asp-route-date="@dateValue"
+                   asp-route-from="@(Model.HasTime ? Model.FromTime : null)" asp-route-to="@(Model.HasTime ? Model.ToTime : null)"
+                   class="btn btn-sm btn-primary">Book</a>
+            }
         </li>
     }
 </ul>

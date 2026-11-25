@@ -46,6 +46,7 @@ export default function HomePage() {
   const timeIsInvalid = fromTime !== '' && toTime !== '' && toTime <= fromTime;
   const hasTime = fromTime !== '' && toTime !== '' && !timeIsInvalid;
   const bookingsOnDate = bookings.filter(b => b.startTime.substring(0, 10) === date);
+  const isToday = date === todayString();
   const isFiltered = date !== todayString() || fromTime !== '' || toTime !== '' ||
     buildingId !== '' || minCapacity !== '' || facilityIds.length > 0;
 
@@ -98,9 +99,9 @@ export default function HomePage() {
   };
 
   // The Book button sends room, date and time to the booking form.
-  const bookLink = (roomId: number) => {
+  const bookLink = (roomId: number, withTime: boolean) => {
     const params = new URLSearchParams({ roomId: String(roomId), date });
-    if (hasTime) {
+    if (withTime) {
       params.append('from', fromTime);
       params.append('to', toTime);
     }
@@ -209,6 +210,12 @@ export default function HomePage() {
             <span className="legend-swatch" aria-hidden="true"></span>
             Booked
           </span>
+          {isToday && (
+            <span className="legend">
+              <span className="legend-swatch legend-swatch-past" aria-hidden="true"></span>
+              Passed
+            </span>
+          )}
           {hasTime && (
             <span className="legend">
               <span className="legend-swatch legend-swatch-selected" aria-hidden="true"></span>
@@ -247,6 +254,7 @@ export default function HomePage() {
                 bookings={bookingsOnDate.filter(b => b.roomId === room.id)}
                 selectedFrom={hasTime ? fromTime : undefined}
                 selectedTo={hasTime ? toTime : undefined}
+                showPast={isToday}
               />
               <span className="status-cell">
                 {hasTime
@@ -255,7 +263,10 @@ export default function HomePage() {
                     : <span className="status status-busy">Booked</span>)
                   : <span className="status-summary">{bookingSummary(room.id)}</span>}
               </span>
-              <Link to={bookLink(room.id)} className="btn btn-sm btn-primary">Book</Link>
+              {/* A room that is booked at the chosen time opens the form without that time, so the user picks another. */}
+              {hasTime && !isFree(room.id)
+                ? <Link to={bookLink(room.id, false)} className="btn btn-sm btn-outline-secondary">Other time</Link>
+                : <Link to={bookLink(room.id, hasTime)} className="btn btn-sm btn-primary">Book</Link>}
             </li>
           ))}
         </ul>

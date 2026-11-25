@@ -34,6 +34,16 @@ builder.Services.AddIdentity<AuthUser, IdentityRole>(options => options.User.Req
     .AddDefaultTokenProviders()
     .AddErrorDescriber<CustomIdentityErrorDescriber>();
 
+// The key that signs the JWT tokens. In Development it comes from appsettings.Development.json, so the
+// app runs without any setup. Anywhere else it must be set, for example with the environment variable Jwt__Key.
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException(
+        $"Jwt:Key is missing or shorter than 32 characters (environment: {builder.Environment.EnvironmentName}). " +
+        "Set it with the environment variable Jwt__Key, or run in Development where appsettings.Development.json provides it.");
+}
+
 // The API uses JWT tokens instead of cookies. The token in each request is checked here.
 builder.Services.AddAuthentication(options =>
 {
@@ -53,7 +63,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
 

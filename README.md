@@ -50,6 +50,8 @@ Terminal 1, the API:
 
 The API runs on http://localhost:5246. API documentation (Scalar): http://localhost:5246/scalar/v1
 
+`dotnet run` starts the API in Development, where the JWT signing key is read from `api/appsettings.Development.json`. In any other environment the API refuses to start until a key of at least 32 characters is set, for example with the environment variable `Jwt__Key`.
+
 Terminal 2, the frontend:
 
     cd frontend

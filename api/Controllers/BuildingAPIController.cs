@@ -33,7 +33,7 @@ public class BuildingAPIController : ControllerBase
         if (buildings == null)
         {
             _logger.LogError("[BuildingAPIController] Building list not found while executing GetAll().");
-            return NotFound("Building list not found");
+            return StatusCode(500, "Could not load the building list.");
         }
         var buildingDtos = buildings.Select(ToDto);
         return Ok(buildingDtos);
@@ -132,7 +132,7 @@ public class BuildingAPIController : ControllerBase
         if (!returnOk)
         {
             _logger.LogWarning("[BuildingAPIController] Building with Id {Id} could not be deleted.", id);
-            return BadRequest("Building deletion failed");
+            return StatusCode(500, "Could not delete the building.");
         }
         return NoContent();
     }

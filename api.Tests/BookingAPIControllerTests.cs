@@ -201,6 +201,31 @@ public class BookingAPIControllerTests
     }
 
     [Fact]
+    public async Task BookingList_DatabaseFails_ReturnsServerError()
+    {
+        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync((IEnumerable<Booking>?)null);
+        var controller = CreateController();
+
+        var result = await controller.BookingList();
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_DatabaseFails_ReturnsServerError()
+    {
+        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
+        _bookingRepositoryMock.Setup(r => r.Delete(1)).ReturnsAsync(false);
+        var controller = CreateController();
+
+        var result = await controller.DeleteConfirmed(1);
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, objectResult.StatusCode);
+    }
+
+    [Fact]
     public async Task BookingList_Guest_HidesNames()
     {
         var booking = CreateBooking(1, "kari@oslomet.no");

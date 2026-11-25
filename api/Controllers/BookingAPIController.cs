@@ -130,7 +130,7 @@ public class BookingAPIController : ControllerBase
         if (bookings == null)
         {
             _logger.LogError("[BookingAPIController] Booking list not found while executing GetAll().");
-            return NotFound("Booking list not found");
+            return StatusCode(500, "Could not load the booking list.");
         }
         var bookingDtos = bookings.Select(ToVisibleDto);
         return Ok(bookingDtos);
@@ -145,7 +145,7 @@ public class BookingAPIController : ControllerBase
         if (bookings == null)
         {
             _logger.LogError("[BookingAPIController] Booking list not found while executing GetAll().");
-            return NotFound("Booking list not found");
+            return StatusCode(500, "Could not load the booking list.");
         }
         var userName = User.Identity?.Name;
         var myBookings = bookings.Where(b => b.BookedBy == userName || IsParticipant(b, userName)).Select(ToVisibleDto);
@@ -299,7 +299,7 @@ public class BookingAPIController : ControllerBase
         if (!returnOk)
         {
             _logger.LogWarning("[BookingAPIController] Booking with Id {Id} could not be deleted.", id);
-            return BadRequest("Booking deletion failed");
+            return StatusCode(500, "Could not delete the booking.");
         }
         return NoContent();
     }

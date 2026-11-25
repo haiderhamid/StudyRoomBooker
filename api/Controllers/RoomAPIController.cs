@@ -58,7 +58,7 @@ public class RoomAPIController : ControllerBase
         if (rooms == null)
         {
             _logger.LogError("[RoomAPIController] Room list not found while executing Search().");
-            return NotFound("Room list not found");
+            return StatusCode(500, "Could not load the room list.");
         }
         var roomDtos = rooms.Select(ToDto);
         return Ok(roomDtos);
@@ -194,7 +194,7 @@ public class RoomAPIController : ControllerBase
         if (!returnOk)
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} could not be deleted.", id);
-            return BadRequest("Room deletion failed");
+            return StatusCode(500, "Could not delete the room.");
         }
         return NoContent();
     }

@@ -20,7 +20,7 @@ public class FacilityAPIController : ControllerBase
         if (facilities == null)
         {
             _logger.LogError("[FacilityAPIController] Facility list not found while executing GetAll().");
-            return NotFound("Facility list not found");
+            return StatusCode(500, "Could not load the facility list.");
         }
         var facilityDtos = facilities.Select(f => new FacilityDto { Id = f.Id, Name = f.Name });
         return Ok(facilityDtos);

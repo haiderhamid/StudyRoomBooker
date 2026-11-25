@@ -10,7 +10,9 @@ builder.Services.AddSerilog(config => config
 .WriteTo.File($"Logs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log"));
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+// An empty value for a number or date field gave "The value '' is invalid.", so it gets a clearer message.
+builder.Services.AddControllersWithViews(options =>
+    options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(_ => "Please fill in this field."));
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 

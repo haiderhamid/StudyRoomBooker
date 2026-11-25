@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 
@@ -239,6 +240,13 @@ public class BookingController : Controller
         }
     }
 
+    // False when the form value could not be read, for example an empty date or a time like "abc".
+    // Checking such a field further would only add confusing messages, like "time has passed".
+    private bool IsRead(string key)
+    {
+        return ModelState.GetFieldValidationState(key) != ModelValidationState.Invalid;
+    }
+
     private bool IsQuarterHour(DateTime time)
     {
         return time.Minute % 15 == 0 && time.Second == 0;
@@ -306,14 +314,19 @@ public class BookingController : Controller
         // Field is not in the form so it is removed from the validation.
         ModelState.Remove("Booking.BookedBy");
 
-        ValidateTimes(booking);
+        // Fields that could not be read already have an error, so they are not checked further.
+        var timesAreRead = IsRead("Date") && IsRead("FromTime") && IsRead("ToTime");
+        if (timesAreRead)
+        {
+            ValidateTimes(booking);
+        }
         // The room must exist, otherwise the database would refuse the booking.
-        if (await _roomRepository.GetRoomById(booking.RoomId) == null)
+        if (IsRead("Booking.RoomId") && await _roomRepository.GetRoomById(booking.RoomId) == null)
         {
             ModelState.AddModelError("Booking.RoomId", "Please choose a room from the list.");
         }
         // Checks if the room is already booked at this time.
-        if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
+        if (timesAreRead && await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
         }
@@ -407,21 +420,29 @@ public class BookingController : Controller
         booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
         ModelState.Remove("Booking.BookedBy");
 
-        // Only check for a past start time if the start time was changed.
-        ValidateTimes(booking, booking.StartTime != originalStart);
-        // If people have joined, the new room must still have a seat for everyone.
-        var room = await _roomRepository.GetRoomById(booking.RoomId);
-        if (room == null)
+        // Fields that could not be read already have an error, so they are not checked further.
+        var timesAreRead = IsRead("Date") && IsRead("FromTime") && IsRead("ToTime");
+        if (timesAreRead)
         {
-            ModelState.AddModelError("Booking.RoomId", "Please choose a room from the list.");
+            // Only check for a past start time if the start time was changed.
+            ValidateTimes(booking, booking.StartTime != originalStart);
         }
-        else if (room.Capacity < booking.SeatsTaken)
+        // If people have joined, the new room must still have a seat for everyone.
+        if (IsRead("Booking.RoomId"))
         {
-            ModelState.AddModelError("", $"{booking.SeatsTaken} people are in this booking, but the room only has {room.Capacity} seats.");
+            var room = await _roomRepository.GetRoomById(booking.RoomId);
+            if (room == null)
+            {
+                ModelState.AddModelError("Booking.RoomId", "Please choose a room from the list.");
+            }
+            else if (room.Capacity < booking.SeatsTaken)
+            {
+                ModelState.AddModelError("", $"{booking.SeatsTaken} people are in this booking, but the room only has {room.Capacity} seats.");
+            }
         }
 
         // Same check as in Create, but skips the booking we are editing. 
-        if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
+        if (timesAreRead && await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
         }

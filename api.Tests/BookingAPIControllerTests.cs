@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -198,6 +199,19 @@ public class BookingAPIControllerTests
 
         Assert.IsType<BadRequestObjectResult>(result);
         _bookingRepositoryMock.Verify(r => r.AddParticipant(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public void BookingDto_MissingTimes_IsInvalid()
+    {
+        var dto = new BookingDto { RoomId = 1, Subject = "Math" };
+        var results = new List<ValidationResult>();
+
+        var isValid = Validator.TryValidateObject(dto, new ValidationContext(dto), results, validateAllProperties: true);
+
+        Assert.False(isValid);
+        Assert.Contains(results, r => r.MemberNames.Contains("StartTime") && r.ErrorMessage == "Please choose a start time.");
+        Assert.Contains(results, r => r.MemberNames.Contains("EndTime") && r.ErrorMessage == "Please choose an end time.");
     }
 
     [Fact]

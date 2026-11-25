@@ -504,6 +504,24 @@ public class BookingControllerTests
     }
 
     [Fact]
+    public async Task Create_DateCouldNotBeRead_ShowsOnlyThatError()
+    {
+        var viewModel = CreateValidViewModel();
+        viewModel.Date = default;
+        var controller = CreateController();
+        // Model binding adds this error when the date field is empty.
+        controller.ModelState.AddModelError("Date", "Please fill in this field.");
+
+        var result = await controller.Create(viewModel);
+
+        Assert.IsType<ViewResult>(result);
+        // No extra "time has passed" or "opening hours" errors for a date that was never given.
+        var error = Assert.Single(controller.ModelState.Values.SelectMany(v => v.Errors));
+        Assert.Equal("Please fill in this field.", error.ErrorMessage);
+        _bookingRepositoryMock.Verify(r => r.Create(It.IsAny<Booking>()), Times.Never);
+    }
+
+    [Fact]
     public async Task Create_RoomDoesNotExist_ReturnsViewWithError()
     {
         // Someone sends a room id that is not in the database.

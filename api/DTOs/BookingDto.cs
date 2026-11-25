@@ -15,11 +15,12 @@ public class BookingDto
     [StringLength(100)]
     public string Subject { get; set; } = string.Empty;
 
-    [Required]
-    public DateTime StartTime { get; set; }
+    // Nullable, so [Required] can tell when a time is missing. Otherwise it would be 0001-01-01.
+    [Required(ErrorMessage = "Please choose a start time.")]
+    public DateTime? StartTime { get; set; }
 
-    [Required]
-    public DateTime EndTime { get; set; }
+    [Required(ErrorMessage = "Please choose an end time.")]
+    public DateTime? EndTime { get; set; }
 
     // Set by the API from the token. Empty when you are not allowed to see who booked.
     [StringLength(100)]

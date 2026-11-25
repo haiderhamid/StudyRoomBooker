@@ -177,8 +177,9 @@ public class BookingAPIController : ControllerBase
         {
             RoomId = bookingDto.RoomId,
             Subject = bookingDto.Subject,
-            StartTime = bookingDto.StartTime,
-            EndTime = bookingDto.EndTime,
+            // [Required] on the DTO makes sure the times are set before the action runs.
+            StartTime = bookingDto.StartTime.GetValueOrDefault(),
+            EndTime = bookingDto.EndTime.GetValueOrDefault(),
             // BookedBy comes from the token, not from the request, so nobody can book for someone else.
             BookedBy = User.Identity?.Name ?? string.Empty
         };
@@ -238,8 +239,8 @@ public class BookingAPIController : ControllerBase
         var originalStart = booking.StartTime;
         booking.RoomId = bookingDto.RoomId;
         booking.Subject = bookingDto.Subject;
-        booking.StartTime = bookingDto.StartTime;
-        booking.EndTime = bookingDto.EndTime;
+        booking.StartTime = bookingDto.StartTime.GetValueOrDefault();
+        booking.EndTime = bookingDto.EndTime.GetValueOrDefault();
 
         // Only check for a past start time if the start time was changed.
         await ValidateBooking(booking, id, booking.StartTime != originalStart);

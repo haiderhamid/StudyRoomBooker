@@ -19,17 +19,25 @@ public class BookingController : Controller
     // Shows the bookings the logged in user has made or joined. 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? view = null)
     {
+        // "past" shows bookings that have ended, newest first. Otherwise upcoming bookings, soonest first.
+        var showPast = view == "past";
         var bookings = await _bookingRepository.GetAll();
         if (bookings == null)
         {
             _logger.LogError("[BookingController] Booking list not found while executing GetAll().");
-            return View(new List<Booking>());
+            return View(new BookingListViewModel { ShowPast = showPast });
         }
 
         var userName = User.Identity?.Name;
-        return View(bookings.Where(b => b.BookedBy == userName || IsParticipant(b, userName)).ToList());
+        var now = DateTime.Now;
+        var myBookings = bookings.Where(b => b.BookedBy == userName || IsParticipant(b, userName));
+        var visibleBookings = showPast
+            ? myBookings.Where(b => b.EndTime <= now).OrderByDescending(b => b.StartTime)
+            : myBookings.Where(b => b.EndTime > now).OrderBy(b => b.StartTime);
+
+        return View(new BookingListViewModel { ShowPast = showPast, Bookings = visibleBookings.ToList() });
     }
 
     // Shows one booking. Here other students can see how many seats are left and join.
@@ -43,12 +51,7 @@ public class BookingController : Controller
             return NotFound();
         }
 
-        var userName = User.Identity?.Name;
-        ViewBag.CanManage = userName != null && CanManage(booking);
-        ViewBag.HasStarted = HasStarted(booking);
-        ViewBag.IsJoined = IsParticipant(booking, userName);
-        ViewBag.JoinError = userName == null ? null : JoinError(booking, userName);
-        return View(booking);
+        return View(CreateDetailsViewModel(booking));
     }
 
     [Authorize]
@@ -147,6 +150,20 @@ public class BookingController : Controller
             return "This booking is full.";
         }
         return null;
+    }
+
+    // What the Details, Delete and Started views need to know about the booking and the user.
+    private BookingDetailsViewModel CreateDetailsViewModel(Booking booking)
+    {
+        var userName = User.Identity?.Name;
+        return new BookingDetailsViewModel
+        {
+            Booking = booking,
+            CanManage = userName != null && CanManage(booking),
+            HasStarted = HasStarted(booking),
+            IsJoined = IsParticipant(booking, userName),
+            JoinError = userName == null ? null : JoinError(booking, userName)
+        };
     }
 
     // Makes the list of rooms for the dropdown in Create and Edit.
@@ -339,7 +356,7 @@ public class BookingController : Controller
 
         if (HasStarted(booking))
         {
-            return View("Started", booking);
+            return View("Started", CreateDetailsViewModel(booking));
         }
 
         var viewModel = new BookingViewModel
@@ -380,7 +397,7 @@ public class BookingController : Controller
         if (HasStarted(booking))
         {
             _logger.LogWarning("[BookingController] Booking with Id {Id} was not updated because it has started.", id);
-            return View("Started", booking);
+            return View("Started", CreateDetailsViewModel(booking));
         }
 
         var originalStart = booking.StartTime;
@@ -444,8 +461,7 @@ public class BookingController : Controller
             return ForbidAndLog(id, "delete");
         }
 
-        ViewBag.HasStarted = HasStarted(booking);
-        return View(booking);
+        return View(CreateDetailsViewModel(booking));
     }
 
     [Authorize]
@@ -469,8 +485,7 @@ public class BookingController : Controller
         if (HasStarted(booking))
         {
             _logger.LogWarning("[BookingController] Booking with Id {Id} was not deleted because it has started.", id);
-            ViewBag.HasStarted = true;
-            return View("Delete", booking);
+            return View("Delete", CreateDetailsViewModel(booking));
         }
 
         bool deleted = await _bookingRepository.Delete(id);

@@ -12,6 +12,17 @@ public class BuildingController : Controller
         _logger = logger;
     }
 
+    private static BuildingViewModel ToViewModel(Building building)
+    {
+        return new BuildingViewModel
+        {
+            Id = building.Id,
+            Name = building.Name,
+            Address = building.Address,
+            RoomCount = building.Rooms?.Count ?? 0
+        };
+    }
+
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -19,25 +30,26 @@ public class BuildingController : Controller
         if (buildings == null)
         {
             _logger.LogError("[BuildingController] Building list not found while executing GetAll().");
-            return View(new List<Building>());
+            return View(new List<BuildingViewModel>());
         }
-        return View(buildings.ToList());
+        return View(buildings.Select(ToViewModel).ToList());
     }
 
     [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult Create()
     {
-        return View();
+        return View(new BuildingViewModel());
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Building building)
+    public async Task<IActionResult> Create(BuildingViewModel viewModel)
     {
         if (ModelState.IsValid)
         {
+            var building = new Building { Name = viewModel.Name, Address = viewModel.Address };
             bool created = await _buildingRepository.Create(building);
             if (created)
             {
@@ -46,7 +58,7 @@ public class BuildingController : Controller
             }
             ModelState.AddModelError("", "An unexpected error occurred while creating the building. Please try again.");
         }
-        return View(building);
+        return View(viewModel);
     }
 
     [Authorize(Roles = "Admin")]
@@ -59,21 +71,22 @@ public class BuildingController : Controller
             _logger.LogWarning("[BuildingController] Building with Id {Id} not found for editing.", id);
             return NotFound();
         }
-        return View(building);
+        return View(ToViewModel(building));
     }
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Building building)
+    public async Task<IActionResult> Edit(int id, BuildingViewModel viewModel)
     {
-        if (id != building.Id)
+        if (id != viewModel.Id)
         {
             return NotFound();
         }
 
         if (ModelState.IsValid)
         {
+            var building = new Building { Id = viewModel.Id, Name = viewModel.Name, Address = viewModel.Address };
             bool updated = await _buildingRepository.Update(building);
             if (updated)
             {
@@ -82,7 +95,7 @@ public class BuildingController : Controller
             }
             ModelState.AddModelError("", "An unexpected error occurred while updating the building. Please try again.");
         }
-        return View(building);
+        return View(viewModel);
     }
 
     [Authorize(Roles = "Admin")]
@@ -95,7 +108,7 @@ public class BuildingController : Controller
             _logger.LogWarning("[BuildingController] Building with Id {Id} not found for deletion.", id);
             return NotFound();
         }
-        return View(building);
+        return View(ToViewModel(building));
     }
 
     [Authorize(Roles = "Admin")]
@@ -113,7 +126,7 @@ public class BuildingController : Controller
         {
             _logger.LogWarning("[BuildingController] Building with Id {Id} was not deleted because it still has rooms.", id);
             ModelState.AddModelError("", "This building still has rooms. Delete or move the rooms first.");
-            return View("Delete", building);
+            return View("Delete", ToViewModel(building));
         }
 
         bool deleted = await _buildingRepository.Delete(id);

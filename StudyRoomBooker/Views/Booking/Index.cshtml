@@ -1,15 +1,12 @@
-@model List<Booking>
+@model BookingListViewModel
 @{
     ViewData["Title"] = "My bookings";
-    var showPast = Context.Request.Query["view"] == "past";
+    var showPast = Model.ShowPast;
     var today = DateTime.Today;
     var now = DateTime.Now;
 
-    var visibleBookings = showPast
-        ? Model.Where(b => b.EndTime <= now).OrderByDescending(b => b.StartTime)
-        : Model.Where(b => b.EndTime > now).OrderBy(b => b.StartTime);
-
-    var days = visibleBookings.GroupBy(b => b.StartTime.Date);
+    // The controller has already filtered and sorted the bookings. Here they are only grouped by day.
+    var days = Model.Bookings.GroupBy(b => b.StartTime.Date);
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
     var userName = User.Identity?.Name;
     var returnUrl = Context.Request.Path + Context.Request.QueryString;

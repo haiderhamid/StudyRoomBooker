@@ -68,20 +68,53 @@ public class BookingControllerTests
     [Fact]
     public async Task Index_ReturnsOnlyBookingsOfLoggedInUser()
     {
-        var bookings = new List<Booking>
-        {
-            new Booking { Id = 1, RoomId = 1, Subject = "Math", BookedBy = "test@oslomet.no" },
-            new Booking { Id = 2, RoomId = 2, Subject = "Physics", BookedBy = "kari@oslomet.no" }
-        };
+        var bookings = new List<Booking> { CreateBooking(1, "test@oslomet.no"), CreateBooking(2, "kari@oslomet.no") };
         _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(bookings);
         var controller = CreateController();
 
         var result = await controller.Index();
 
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsAssignableFrom<List<Booking>>(viewResult.Model);
-        Assert.Single(model);
-        Assert.Equal("Math", model[0].Subject);
+        var model = Assert.IsType<BookingListViewModel>(viewResult.Model);
+        Assert.False(model.ShowPast);
+        Assert.Single(model.Bookings);
+        Assert.Equal(1, model.Bookings[0].Id);
+    }
+
+    [Fact]
+    public async Task Index_PastView_ReturnsOnlyEndedBookingsNewestFirst()
+    {
+        var older = CreateBooking(1, "test@oslomet.no");
+        older.StartTime = DateTime.Today.AddDays(-3).AddHours(10);
+        older.EndTime = DateTime.Today.AddDays(-3).AddHours(11);
+        var newer = CreateBooking(2, "test@oslomet.no");
+        newer.StartTime = DateTime.Today.AddDays(-1).AddHours(10);
+        newer.EndTime = DateTime.Today.AddDays(-1).AddHours(11);
+        var upcoming = CreateBooking(3, "test@oslomet.no");
+        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Booking> { older, upcoming, newer });
+        var controller = CreateController();
+
+        var result = await controller.Index("past");
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<BookingListViewModel>(viewResult.Model);
+        Assert.True(model.ShowPast);
+        Assert.Equal(new[] { 2, 1 }, model.Bookings.Select(b => b.Id));
+    }
+
+    [Fact]
+    public async Task Details_OtherUsersBooking_ModelLetsUserJoin()
+    {
+        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "kari@oslomet.no"));
+        var controller = CreateController();
+
+        var result = await controller.Details(1);
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<BookingDetailsViewModel>(viewResult.Model);
+        Assert.False(model.CanManage);
+        Assert.False(model.IsJoined);
+        Assert.Null(model.JoinError);
     }
 
     [Fact]
@@ -317,8 +350,8 @@ public class BookingControllerTests
         var result = await controller.Index();
 
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsAssignableFrom<List<Booking>>(viewResult.Model);
-        Assert.Equal(new[] { 1, 2 }, model.Select(b => b.Id));
+        var model = Assert.IsType<BookingListViewModel>(viewResult.Model);
+        Assert.Equal(new[] { 1, 2 }, model.Bookings.Select(b => b.Id));
     }
 
     [Fact]

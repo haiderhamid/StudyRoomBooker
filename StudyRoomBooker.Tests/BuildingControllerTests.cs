@@ -29,6 +29,20 @@ public class BuildingControllerTests
     }
 
     [Fact]
+    public async Task Edit_ValidViewModel_UpdatesOnlyFormFields()
+    {
+        _buildingRepositoryMock.Setup(r => r.Update(It.IsAny<Building>())).ReturnsAsync(true);
+        var viewModel = new BuildingViewModel { Id = 1, Name = "Pilestredet 36", Address = "Pilestredet 36, Oslo", RoomCount = 99 };
+        var controller = CreateController();
+
+        var result = await controller.Edit(1, viewModel);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        _buildingRepositoryMock.Verify(r => r.Update(It.Is<Building>(b =>
+            b.Id == 1 && b.Name == "Pilestredet 36" && b.Address == "Pilestredet 36, Oslo" && b.Rooms == null)), Times.Once);
+    }
+
+    [Fact]
     public async Task DeleteConfirmed_BuildingWithRooms_ReturnsDeleteView()
     {
         var building = new Building
@@ -45,6 +59,8 @@ public class BuildingControllerTests
 
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("Delete", viewResult.ViewName);
+        var model = Assert.IsType<BuildingViewModel>(viewResult.Model);
+        Assert.Equal(1, model.RoomCount);
         _buildingRepositoryMock.Verify(r => r.Delete(It.IsAny<int>()), Times.Never);
     }
 }

@@ -1,4 +1,4 @@
-@model List<Building>
+@model List<BuildingViewModel>
 @{
     ViewData["Title"] = "Buildings";
     var isAdmin = User.IsInRole("Admin");
@@ -23,7 +23,7 @@
 <ul class="item-rows">
     @foreach (var building in Model)
     {
-        var roomCount = building.Rooms?.Count ?? 0;
+        var roomCount = building.RoomCount;
         <li class="item-row">
             <div class="item-main">
                 <span class="item-title">@building.Name</span>

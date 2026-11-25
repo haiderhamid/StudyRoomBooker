@@ -1,4 +1,4 @@
-@model Booking
+@model BookingDetailsViewModel
 @{
     ViewData["Title"] = "Delete booking";
 }
@@ -13,21 +13,21 @@
         <div class="card-body">
             <dl class="detail-list">
                 <dt>Subject</dt>
-                <dd>@Model.Subject</dd>
+                <dd>@Model.Booking.Subject</dd>
                 <dt>Room</dt>
-                <dd>Room @Model.Room?.RoomNumber, @Model.Room?.Building?.Name</dd>
+                <dd>Room @Model.Booking.Room?.RoomNumber, @Model.Booking.Room?.Building?.Name</dd>
                 <dt>Date</dt>
-                <dd>@Model.StartTime.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))</dd>
+                <dd>@Model.Booking.StartTime.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))</dd>
                 <dt>Time</dt>
-                <dd>@Model.StartTime.ToString("HH:mm")–@Model.EndTime.ToString("HH:mm")</dd>
+                <dd>@Model.Booking.StartTime.ToString("HH:mm")–@Model.Booking.EndTime.ToString("HH:mm")</dd>
                 @if (User.IsInRole("Admin"))
                 {
                     <dt>Booked by</dt>
-                    <dd>@Model.BookedBy</dd>
+                    <dd>@Model.Booking.BookedBy</dd>
                 }
             </dl>
 
-            @if (ViewBag.HasStarted == true)
+            @if (Model.HasStarted)
             {
                 <p class="notice">This booking has already started and cannot be deleted.</p>
                 <div class="form-actions">
@@ -37,7 +37,7 @@
             else
             {
                 <form asp-action="Delete" method="post" class="form-actions">
-                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" name="Id" value="@Model.Booking.Id" />
                     <button type="submit" class="btn btn-danger">Delete booking</button>
                     <a asp-action="Index" class="btn btn-quiet">Cancel</a>
                 </form>

@@ -1,7 +1,7 @@
-@model Building
+@model BuildingViewModel
 @{
     ViewData["Title"] = "Delete building";
-    var hasRooms = Model.Rooms != null && Model.Rooms.Any();
+    var hasRooms = Model.RoomCount > 0;
 }
 
 <div class="form-shell form-shell-narrow">
@@ -20,7 +20,7 @@
                 <dt>Address</dt>
                 <dd>@Model.Address</dd>
                 <dt>Rooms</dt>
-                <dd>@(Model.Rooms?.Count ?? 0)</dd>
+                <dd>@Model.RoomCount</dd>
             </dl>
 
             @if (hasRooms)

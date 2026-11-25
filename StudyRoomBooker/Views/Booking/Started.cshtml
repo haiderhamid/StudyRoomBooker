@@ -1,4 +1,4 @@
-@model Booking
+@model BookingDetailsViewModel
 @{
     ViewData["Title"] = "Booking has started";
 }
@@ -13,11 +13,11 @@
         <div class="card-body">
             <dl class="detail-list">
                 <dt>Subject</dt>
-                <dd>@Model.Subject</dd>
+                <dd>@Model.Booking.Subject</dd>
                 <dt>Room</dt>
-                <dd>Room @Model.Room?.RoomNumber, @Model.Room?.Building?.Name</dd>
+                <dd>Room @Model.Booking.Room?.RoomNumber, @Model.Booking.Room?.Building?.Name</dd>
                 <dt>Time</dt>
-                <dd>@Model.StartTime.ToString("d MMMM HH:mm")–@Model.EndTime.ToString("HH:mm")</dd>
+                <dd>@Model.Booking.StartTime.ToString("d MMMM HH:mm")–@Model.Booking.EndTime.ToString("HH:mm")</dd>
             </dl>
             <div class="form-actions">
                 <a asp-action="Index" class="btn btn-outline-secondary">Back to my bookings</a>

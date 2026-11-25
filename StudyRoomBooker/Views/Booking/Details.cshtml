@@ -1,17 +1,18 @@
-@model Booking
+@model BookingDetailsViewModel
 @{
-    ViewData["Title"] = Model.Subject;
-    var capacity = Model.Room?.Capacity ?? 0;
-    var canManage = ViewBag.CanManage == true;
-    var isJoined = ViewBag.IsJoined == true;
-    var joinError = ViewBag.JoinError as string;
-    var hasEnded = Model.EndTime <= DateTime.Now;
+    var booking = Model.Booking;
+    ViewData["Title"] = booking.Subject;
+    var capacity = booking.Room?.Capacity ?? 0;
+    var canManage = Model.CanManage;
+    var isJoined = Model.IsJoined;
+    var joinError = Model.JoinError;
+    var hasEnded = booking.EndTime <= DateTime.Now;
 }
 
 <div class="form-shell">
     <header class="page-header">
-        <h1 class="page-title">@Model.Subject</h1>
-        <p class="page-subtitle">@Model.SeatsTaken of @capacity seats taken</p>
+        <h1 class="page-title">@booking.Subject</h1>
+        <p class="page-subtitle">@booking.SeatsTaken of @capacity seats taken</p>
     </header>
 
     @if (TempData["Message"] != null)
@@ -27,39 +28,39 @@
         <div class="card-body">
             <dl class="detail-list">
                 <dt>Room</dt>
-                <dd><a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId">Room @Model.Room?.RoomNumber</a>, @Model.Room?.Building?.Name</dd>
+                <dd><a asp-controller="Room" asp-action="Details" asp-route-id="@booking.RoomId">Room @booking.Room?.RoomNumber</a>, @booking.Room?.Building?.Name</dd>
                 <dt>Date</dt>
-                <dd>@Model.StartTime.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))</dd>
+                <dd>@booking.StartTime.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))</dd>
                 <dt>Time</dt>
-                <dd>@Model.StartTime.ToString("HH:mm")–@Model.EndTime.ToString("HH:mm")</dd>
+                <dd>@booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")</dd>
                 @* Only the owner and admins can see who is in the booking. *@
                 @if (canManage)
                 {
                     <dt>Booked by</dt>
-                    <dd>@Model.BookedBy</dd>
+                    <dd>@booking.BookedBy</dd>
                     <dt>Joined</dt>
                     <dd>
-                        @if (Model.Participants == null || Model.Participants.Count == 0)
+                        @if (booking.Participants == null || booking.Participants.Count == 0)
                         {
                             <span>Nobody yet</span>
                         }
                         else
                         {
-                            <span>@(string.Join(", ", Model.Participants.Select(p => p.UserName)))</span>
+                            <span>@(string.Join(", ", booking.Participants.Select(p => p.UserName)))</span>
                         }
                     </dd>
                 }
             </dl>
 
             <div class="form-actions">
-                @if (canManage && ViewBag.HasStarted != true && !hasEnded)
+                @if (canManage && !Model.HasStarted && !hasEnded)
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
-                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-quiet btn-quiet-danger">Delete</a>
+                    <a asp-action="Edit" asp-route-id="@booking.Id" class="btn btn-primary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@booking.Id" class="btn btn-quiet btn-quiet-danger">Delete</a>
                 }
                 else if (isJoined && !hasEnded)
                 {
-                    <form asp-action="Leave" asp-route-id="@Model.Id" method="post">
+                    <form asp-action="Leave" asp-route-id="@booking.Id" method="post">
                         <button type="submit" class="btn btn-outline-secondary">Leave</button>
                     </form>
                 }
@@ -72,7 +73,7 @@
                 }
                 else if (joinError == null)
                 {
-                    <form asp-action="Join" asp-route-id="@Model.Id" method="post">
+                    <form asp-action="Join" asp-route-id="@booking.Id" method="post">
                         <button type="submit" class="btn btn-primary">Join</button>
                     </form>
                 }
@@ -80,7 +81,7 @@
                 {
                     <p class="notice mt-0">@joinError</p>
                 }
-                <a asp-controller="Room" asp-action="Details" asp-route-id="@Model.RoomId" class="btn btn-quiet">Back to room</a>
+                <a asp-controller="Room" asp-action="Details" asp-route-id="@booking.RoomId" class="btn btn-quiet">Back to room</a>
             </div>
         </div>
     </div>

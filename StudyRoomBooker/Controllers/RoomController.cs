@@ -73,7 +73,7 @@ public class RoomController : Controller
         var viewModel = new RoomDetailsViewModel
         {
             Room = room,
-            Schedule = await BuildSchedule(id, StartOfWeek(week ?? DateTime.Today), null)
+            Schedule = await BuildSchedule(id, WeekStartOrThisWeek(week), null)
         };
         return View(viewModel);
     }
@@ -82,12 +82,14 @@ public class RoomController : Controller
     // Returns just the calendar. site.js uses this to update it on the booking form. 
     public async Task<IActionResult> Schedule(int id, DateTime? week, DateTime? date, string? from, string? to, int? excludeBookingId)
     {
-        var weekStart = StartOfWeek(week ?? date ?? DateTime.Today);
+        var weekStart = WeekStartOrThisWeek(week ?? date);
         var schedule = await BuildSchedule(id, weekStart, excludeBookingId);
 
-        if (date.HasValue &&
+        // Times must be within one day, otherwise adding them to the date could overflow.
+        if (date.HasValue && IsSafeDate(date.Value) &&
             TimeSpan.TryParse(from, CultureInfo.InvariantCulture, out var fromTime) &&
             TimeSpan.TryParse(to, CultureInfo.InvariantCulture, out var toTime) &&
+            fromTime >= TimeSpan.Zero && toTime <= TimeSpan.FromDays(1) &&
             toTime > fromTime)
         {
             schedule.SelectedStart = date.Value.Date.Add(fromTime);
@@ -119,7 +121,19 @@ public class RoomController : Controller
         };
     }
 
-    // Gets the Monday of the week. 
+    // Dates in the first or last year can't be shown, because the calendar adds and subtracts days.
+    private static bool IsSafeDate(DateTime date)
+    {
+        return date.Year > DateTime.MinValue.Year && date.Year < DateTime.MaxValue.Year;
+    }
+
+    // The Monday of the chosen week. A missing or unusable date gives the current week.
+    private static DateTime WeekStartOrThisWeek(DateTime? date)
+    {
+        return StartOfWeek(date.HasValue && IsSafeDate(date.Value) ? date.Value : DateTime.Today);
+    }
+
+    // Gets the Monday of the week.
     private static DateTime StartOfWeek(DateTime date)
     {
         var daysSinceMonday = ((int)date.DayOfWeek + 6) % 7;

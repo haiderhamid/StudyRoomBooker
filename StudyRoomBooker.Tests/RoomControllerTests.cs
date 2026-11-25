@@ -80,6 +80,45 @@ public class RoomControllerTests
         Assert.Equal("This week", model.Schedule.Bookings[0].Subject);
     }
 
+    // Monday of the current week, the same way the controller works it out.
+    private static DateTime ThisMonday()
+    {
+        return DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7));
+    }
+
+    [Theory]
+    [InlineData("9999-12-31")]
+    [InlineData("0001-01-01")]
+    public async Task Details_WeekOutOfRange_ShowsThisWeek(string week)
+    {
+        var room = new Room { Id = 1, RoomNumber = "101", Capacity = 4, BuildingId = 1 };
+        var booking = new Booking { Id = 1, RoomId = 1, Subject = "Today", BookedBy = "a", StartTime = DateTime.Today.AddHours(10), EndTime = DateTime.Today.AddHours(11) };
+        _roomRepositoryMock.Setup(r => r.GetRoomById(1)).ReturnsAsync(room);
+        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Booking> { booking });
+        var controller = CreateController();
+
+        var result = await controller.Details(1, DateTime.Parse(week));
+
+        var viewResult = Assert.IsType<ViewResult>(result);
+        var model = Assert.IsType<RoomDetailsViewModel>(viewResult.Model);
+        Assert.Equal(ThisMonday(), model.Schedule.WeekStart);
+    }
+
+    [Fact]
+    public async Task Schedule_DateOutOfRangeAndHugeTime_ShowsThisWeekWithoutSelection()
+    {
+        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Booking>());
+        var controller = CreateController();
+
+        // "9999999" is a valid TimeSpan (9999999 days), so adding it to a date would overflow.
+        var result = await controller.Schedule(1, null, DateTime.MaxValue, "10:00", "9999999", null);
+
+        var partialResult = Assert.IsType<PartialViewResult>(result);
+        var model = Assert.IsType<WeekScheduleViewModel>(partialResult.Model);
+        Assert.Equal(ThisMonday(), model.WeekStart);
+        Assert.Null(model.SelectedStart);
+    }
+
     [Fact]
     public async Task Edit_CapacityBelowSeatsTaken_ReturnsViewWithError()
     {

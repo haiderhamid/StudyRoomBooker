@@ -23,6 +23,22 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
+        // Login accepts a username or an email, so a username must not be another account's email,
+        // and an email must not be another account's username. Otherwise login could find the wrong account.
+        if (await _userManager.FindByEmailAsync(registerDto.Username) != null)
+        {
+            ModelState.AddModelError("Username", $"The username {registerDto.Username} is already taken.");
+        }
+        if (await _userManager.FindByNameAsync(registerDto.Email) != null)
+        {
+            ModelState.AddModelError("Email", $"Email '{registerDto.Email}' is already taken.");
+        }
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("[AuthController] User registration failed for {Username}, the username or email is used by another account.", registerDto.Username);
+            return ValidationProblem(ModelState);
+        }
+
         var user = new AuthUser { UserName = registerDto.Username, Email = registerDto.Email };
         var result = await _userManager.CreateAsync(user, registerDto.Password);
 

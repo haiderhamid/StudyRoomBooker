@@ -1,10 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Booking } from '../types/booking';
-import { addDays, isoWeekNumber, toDateString, todayString } from '../shared/dateTime';
-
-const DAY_START = 7;
-const DAY_END = 20;
-const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+import { addDays, DAY_END_HOUR, DAY_START_HOUR, HOUR_MARKS, isoWeekNumber, toDateString, todayString } from '../shared/dateTime';
 
 export interface ScheduleSelection {
   date: string;
@@ -24,8 +20,8 @@ interface WeekScheduleProps {
 
 function toPercent(time: string): number {
   const minutes = Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
-  const clamped = Math.min(Math.max(minutes, DAY_START * 60), DAY_END * 60);
-  return ((clamped - DAY_START * 60) / ((DAY_END - DAY_START) * 60)) * 100;
+  const clamped = Math.min(Math.max(minutes, DAY_START_HOUR * 60), DAY_END_HOUR * 60);
+  return ((clamped - DAY_START_HOUR * 60) / ((DAY_END_HOUR - DAY_START_HOUR) * 60)) * 100;
 }
 
 export default function WeekSchedule({
@@ -97,8 +93,8 @@ export default function WeekSchedule({
           })}
 
           <div className="schedule-times" aria-hidden="true">
-            {HOURS.map(hour => (
-              <span key={hour} style={{ top: `${((hour - DAY_START) / (DAY_END - DAY_START)) * 100}%` }}>
+            {HOUR_MARKS.map(hour => (
+              <span key={hour} style={{ top: `${((hour - DAY_START_HOUR) / (DAY_END_HOUR - DAY_START_HOUR)) * 100}%` }}>
                 {String(hour).padStart(2, '0')}:00
               </span>
             ))}

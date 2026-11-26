@@ -1,5 +1,12 @@
+// Opening hours, the same as in the MVC app and the API
+export const DAY_START_HOUR = 7;
+export const DAY_END_HOUR = 20;
+
+// 7, 8, ... 20, the hour labels on the timeline and in the weekly schedule
+export const HOUR_MARKS = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i);
+
 export const timeOptions: string[] = [];
-for (let minutes = 7 * 60; minutes <= 20 * 60; minutes += 15) {
+for (let minutes = DAY_START_HOUR * 60; minutes <= DAY_END_HOUR * 60; minutes += 15) {
   const hours = String(Math.floor(minutes / 60)).padStart(2, '0');
   const mins = String(minutes % 60).padStart(2, '0');
   timeOptions.push(`${hours}:${mins}`);
@@ -26,7 +33,7 @@ export function startOfWeek(date: Date): Date {
 // Same rule as the MVC app: after 19:45 nothing can be booked today, so the first day is tomorrow.
 export function firstBookableDate(): string {
   const now = new Date();
-  const lastStart = 19 * 60 + 45;
+  const lastStart = DAY_END_HOUR * 60 - 15;
   if (now.getHours() * 60 + now.getMinutes() >= lastStart) {
     return toDateString(addDays(now, 1));
   }
@@ -67,7 +74,7 @@ export function moveEndTime(oldFrom: string, oldTo: string, newFrom: string): st
   if (oldFrom && oldTo && oldTo > oldFrom) {
     duration = timeToMinutes(oldTo) - timeToMinutes(oldFrom);
   }
-  const end = Math.min(timeToMinutes(newFrom) + duration, 20 * 60);
+  const end = Math.min(timeToMinutes(newFrom) + duration, DAY_END_HOUR * 60);
   return minutesToTime(end);
 }
 

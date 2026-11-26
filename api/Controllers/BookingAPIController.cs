@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/[controller]")]
 public class BookingAPIController : ControllerBase
 {
+    // Opening hours, the same as in the MVC app
+    private const int DayStartHour = 7;
+    private const int DayEndHour = 20;
+
     private readonly IBookingRepository _bookingRepository;
     private readonly IRoomRepository _roomRepository;
     private readonly ILogger<BookingAPIController> _logger;
@@ -100,11 +104,11 @@ public class BookingAPIController : ControllerBase
             ModelState.AddModelError("", "You cannot book a time that has already passed.");
         }
 
-        if (booking.StartTime.TimeOfDay < TimeSpan.FromHours(7) ||
-            booking.EndTime.TimeOfDay > TimeSpan.FromHours(20) ||
+        if (booking.StartTime.TimeOfDay < TimeSpan.FromHours(DayStartHour) ||
+            booking.EndTime.TimeOfDay > TimeSpan.FromHours(DayEndHour) ||
             booking.EndTime.Date != booking.StartTime.Date)
         {
-            ModelState.AddModelError("", "Rooms can be booked between 07:00 and 20:00.");
+            ModelState.AddModelError("", $"Rooms can be booked between {DayStartHour:00}:00 and {DayEndHour:00}:00.");
         }
 
         if (booking.EndTime <= booking.StartTime)

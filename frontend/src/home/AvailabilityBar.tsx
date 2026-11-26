@@ -1,9 +1,10 @@
 import type { Booking } from '../types/booking';
+import { DAY_END_HOUR, DAY_START_HOUR, HOUR_MARKS } from '../shared/dateTime';
 
-const DAY_START = 7 * 60;
-const DAY_END = 20 * 60;
+// In minutes, since the bar works with minutes
+const DAY_START = DAY_START_HOUR * 60;
+const DAY_END = DAY_END_HOUR * 60;
 const DAY_LENGTH = DAY_END - DAY_START;
-const HOUR_MARKS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
 
 interface AvailabilityBarProps {
   bookings: Booking[];

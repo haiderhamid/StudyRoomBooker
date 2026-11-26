@@ -27,6 +27,19 @@ public class RoomControllerIntegrationTests : IDisposable
         context.RoomFacilities.Add(new RoomFacility { Room = room, Facility = whiteboard });
         // A second room in the same building, so the building has several rooms like in the real data.
         context.Rooms.Add(new Room { RoomNumber = "102", Capacity = 6, Building = building });
+        // A booking in room 101 that has not ended, with 2 people. Edit checks the seats with
+        // MostSeatsTaken(), and if that ever loads the bookings together with the room, the room
+        // is tracked and saving the edited room fails. Without a booking that would not show up.
+        var tomorrow = DateTime.Today.AddDays(1);
+        context.Bookings.Add(new Booking
+        {
+            Room = room,
+            Subject = "Math",
+            BookedBy = "test@oslomet.no",
+            StartTime = tomorrow.AddHours(10),
+            EndTime = tomorrow.AddHours(11),
+            Participants = new List<BookingParticipant> { new BookingParticipant { UserName = "kari@oslomet.no" } }
+        });
         context.SaveChanges();
     }
 
@@ -80,6 +93,8 @@ public class RoomControllerIntegrationTests : IDisposable
             Assert.Equal("101B", saved.RoomNumber);
             Assert.Equal(8, saved.Capacity);
             Assert.Equal(new[] { projectorId }, saved.RoomFacilities!.Select(rf => rf.FacilityId));
+            // Editing the room must not touch its bookings
+            Assert.True(check.Bookings.Any(b => b.RoomId == roomId && b.Subject == "Math"));
         }
     }
 

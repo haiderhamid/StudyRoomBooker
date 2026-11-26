@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-// A student who has joined someone else's booking.
-// The index stops the same user from joining the same booking twice.
+// A student who joined a booking. The unique index stops
+// the same user from joining the same booking twice.
 [Index(nameof(BookingId), nameof(UserName), IsUnique = true)]
 public class BookingParticipant
 {

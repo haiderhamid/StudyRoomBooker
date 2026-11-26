@@ -10,7 +10,6 @@ import { useAuth } from '../auth/useAuth';
 import { addDays, startOfWeek, toDateString } from '../shared/dateTime';
 import RoomTags from '../shared/RoomTags';
 import WeekSchedule from './WeekSchedule';
-import { isValidId } from '../shared/apiHelpers';
 
 export default function RoomDetailsPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -20,8 +19,7 @@ export default function RoomDetailsPage() {
   const { data: room, isLoading, error } = useQuery<Room, Error>({
     queryKey: ['room', roomId],
     queryFn: () => RoomService.fetchRoomById(roomId!),
-    // A non-numeric id is never fetched, so the page shows "not found" straight away.
-    enabled: isValidId(roomId),
+    enabled: Number.isInteger(Number(roomId)),
   });
 
   const { data: bookings = [], isLoading: bookingsLoading, error: bookingsError } = useQuery<Booking[], Error>({
@@ -46,13 +44,11 @@ export default function RoomDetailsPage() {
   }
 
   const weekEnd = toDateString(addDays(weekStart, 7));
-  // Only this room's bookings in the chosen week.
   const weekBookings = bookings.filter(b =>
     b.roomId === room.id &&
     b.startTime.substring(0, 10) >= toDateString(weekStart) &&
     b.startTime.substring(0, 10) < weekEnd);
 
-  // Bookings you made or joined get their own colour in the schedule.
   const isMine = (booking: Booking) => !!user && (booking.bookedBy === user.sub || !!booking.isJoined);
 
   return (

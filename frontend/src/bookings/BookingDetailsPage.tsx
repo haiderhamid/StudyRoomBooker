@@ -5,7 +5,6 @@ import { Spinner, Alert } from 'react-bootstrap';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
 import { useAuth } from '../auth/useAuth';
-import { isValidId } from '../shared/apiHelpers';
 
 export default function BookingDetailsPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -17,11 +16,10 @@ export default function BookingDetailsPage() {
   const { data: booking, isLoading, error } = useQuery<Booking, Error>({
     queryKey: ['booking', bookingId, user?.sub ?? ''],
     queryFn: () => BookingService.fetchBookingById(bookingId!),
-    // A non-numeric id is never fetched, so the page shows "not found" straight away.
-    enabled: isValidId(bookingId),
+    // If the id is not a number we don't fetch, and the page shows "not found"
+    enabled: Number.isInteger(Number(bookingId)),
   });
 
-  // Join and leave work the same way, so they share what happens afterwards.
   const onSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['booking'] });
     queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -66,7 +64,7 @@ export default function BookingDetailsPage() {
     month: 'long',
   });
 
-  // Picks the right buttons for the user: edit or delete your own, leave if joined, or join if there is room.
+  // Which buttons you get depends on who you are and if the booking has started
   let actions: ReactNode;
   if (canManage && (isAdmin || !hasStarted) && !hasEnded) {
     actions = (
@@ -128,7 +126,7 @@ export default function BookingDetailsPage() {
             <dd>{date}</dd>
             <dt>Time</dt>
             <dd>{booking.startTime.substring(11, 16)}–{booking.endTime.substring(11, 16)}</dd>
-            {/* The API only sends names to the owner and admins. */}
+            {/* The API only sends names to the owner and admins */}
             {canManage && (
               <>
                 <dt>Booked by</dt>

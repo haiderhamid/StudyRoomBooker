@@ -4,7 +4,6 @@ export const headers = {
   'Content-Type': 'application/json',
 };
 
-// Adds the token to the request, so the API knows who is logged in.
 export function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
   const authHeaders: Record<string, string> = {
@@ -16,7 +15,7 @@ export function getAuthHeaders(): Record<string, string> {
   return authHeaders;
 }
 
-// An error from the API, with the HTTP status code, so callers can tell a 404 from a server error.
+// Keeps the status code, so a 404 can be told apart from a 500
 export class ApiError extends Error {
   status: number;
 
@@ -26,12 +25,7 @@ export class ApiError extends Error {
   }
 }
 
-// Ids in the URL must be whole numbers. Anything else can't be a room, building or booking.
-export function isValidId(id: string | undefined): boolean {
-  return !!id && /^\d+$/.test(id);
-}
-
-// Turns error replies from the API into messages the user can read.
+// Turns API errors into a message the user can read
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (response.ok) {
     return response.json() as Promise<T>;

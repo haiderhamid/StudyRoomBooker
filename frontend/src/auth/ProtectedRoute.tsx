@@ -6,7 +6,7 @@ export default function ProtectedRoute() {
   const location = useLocation();
 
   if (!token) {
-    // Not logged in: go to login, and come back here afterwards.
+    // Go to login and come back here afterwards
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 

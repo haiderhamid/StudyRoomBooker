@@ -1,6 +1,5 @@
 const timeToMinutes = time => Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
 
-// For every form that has a start and an end time.
 document.querySelectorAll('form').forEach(form => {
     const fromSelect = form.elements['FromTime'] || form.elements['from'];
     const toSelect = form.elements['ToTime'] || form.elements['to'];
@@ -13,7 +12,6 @@ document.querySelectorAll('form').forEach(form => {
     const todayValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // Hides times that have already passed today.
     const hidePassedTimes = () => {
         const isToday = dateInput && dateInput.value === todayValue;
         [fromSelect, toSelect].forEach(select => {
@@ -31,7 +29,7 @@ document.querySelectorAll('form').forEach(form => {
     }
 
     let previousFrom = fromSelect.value;
-    // When the start time changes, the end time moves too, so the booking keeps the same length.
+    // Keep the same length when the start time changes
     fromSelect.addEventListener('change', () => {
         const newFrom = fromSelect.value;
         if (newFrom) {
@@ -50,7 +48,7 @@ document.querySelectorAll('form').forEach(form => {
     });
 });
 
-// Search forms: search again as soon as a field changes. Empty fields are left out of the URL.
+// Search as soon as something changes. Empty fields are left out of the URL.
 document.querySelectorAll('form[data-auto-submit]').forEach(form => {
     form.addEventListener('change', () => {
         const params = new URLSearchParams();
@@ -64,12 +62,12 @@ document.querySelectorAll('form[data-auto-submit]').forEach(form => {
     });
 });
 
-// Booking form: shows the calendar for the chosen room and updates it when something changes.
+// Calendar under the booking form
 const bookingSchedule = document.getElementById('booking-schedule');
 const bookingForm = document.querySelector('form[data-booking-form]');
 
 if (bookingSchedule && bookingForm) {
-    // Loads the calendar for the chosen room and week from RoomController.Schedule.
+    // HTML comes from RoomController.Schedule
     const loadSchedule = week => {
         const roomId = bookingForm.elements['Booking.RoomId'].value;
         if (!roomId) {
@@ -99,7 +97,7 @@ if (bookingSchedule && bookingForm) {
     };
 
     bookingForm.addEventListener('change', () => loadSchedule());
-    // The arrows in the calendar load another week without leaving the form.
+    // Arrows load another week without leaving the form
     bookingSchedule.addEventListener('click', event => {
         const link = event.target.closest('[data-week]');
         if (link) {

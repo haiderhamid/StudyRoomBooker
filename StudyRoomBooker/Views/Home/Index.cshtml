@@ -4,7 +4,6 @@
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
     var hourMarks = Enumerable.Range(HomeViewModel.DayStartHour, HomeViewModel.DayEndHour - HomeViewModel.DayStartHour + 1);
     var dateValue = Model.Date.ToString("yyyy-MM-dd");
-    // On today's timeline the hours that have passed are greyed out.
     var isToday = Model.Date == DateTime.Today;
 }
 
@@ -149,7 +148,7 @@
                 </div>
             </div>
 
-            @* Timeline for the day. Each booking is placed by its start time and width in percent. *@
+            @* Bookings are placed on the timeline with left and width in percent *@
             <div class="availability">
                 <div class="availability-track">
                     @if (isToday)
@@ -199,7 +198,7 @@
                 }
             </span>
 
-            @* A room that is booked at the chosen time opens the form without that time, so the user picks another. *@
+            @* Booked at the chosen time: open the form without the time *@
             @if (Model.HasTime && !item.IsFree)
             {
                 <a asp-controller="Booking" asp-action="Create" asp-route-roomId="@room.Id" asp-route-date="@dateValue"

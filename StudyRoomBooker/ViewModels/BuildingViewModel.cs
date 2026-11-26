@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-// A building as shown and edited in the Building views, plus how many rooms it has.
 public class BuildingViewModel
 {
     public int Id { get; set; }
@@ -14,7 +13,7 @@ public class BuildingViewModel
     [StringLength(200)]
     public string Address { get; set; } = string.Empty;
 
-    // Only shown on the page. It is never read from a form.
+    // Only shown, never read from the form
     [BindNever]
     public int RoomCount { get; set; }
 }

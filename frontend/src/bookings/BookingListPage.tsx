@@ -30,10 +30,10 @@ export default function BookingListPage() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  // A confirmation sent by the page we came from (create, edit or delete), or set by an action on this page.
+  // Message from create/edit/delete, or from delete/leave on this page
   const [message, setMessage] = useState<string | null>(location.state?.message ?? null);
 
-  // Removes the message from the browser history, so it is not shown again after a reload.
+  // Clear it from the history so it doesn't come back on reload
   useEffect(() => {
     if (location.state?.message) {
       navigate(location.pathname, { replace: true, state: null });
@@ -68,10 +68,10 @@ export default function BookingListPage() {
   };
 
   const now = new Date();
-  // Bookings that have started can't be changed, so the buttons are hidden.
+  // Started bookings can't be changed, so no buttons
   const hasStarted = (booking: Booking) => new Date(booking.startTime) <= now;
   const hasEnded = (booking: Booking) => new Date(booking.endTime) <= now;
-  // The list also has bookings made by others that you have joined.
+  // The list also has bookings by others that you joined
   const isMine = (booking: Booking) => booking.bookedBy === user?.sub;
   const visibleBookings = bookings
     .filter(b => (view === 'upcoming' ? !hasEnded(b) : hasEnded(b)))
@@ -79,7 +79,6 @@ export default function BookingListPage() {
       ? a.startTime.localeCompare(b.startTime)
       : b.startTime.localeCompare(a.startTime)));
 
-  // The dates that have bookings. Used as headings.
   const dates: string[] = [];
   for (const booking of visibleBookings) {
     const date = booking.startTime.substring(0, 10);

@@ -4,7 +4,6 @@ import { Spinner, Alert } from 'react-bootstrap';
 import RoomForm from './RoomForm';
 import type { Room } from '../types/room';
 import * as RoomService from './RoomService';
-import { isValidId } from '../shared/apiHelpers';
 
 export default function RoomUpdatePage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -14,8 +13,7 @@ export default function RoomUpdatePage() {
   const { data: room, isLoading, error } = useQuery<Room, Error>({
     queryKey: ['room', roomId],
     queryFn: () => RoomService.fetchRoomById(roomId!),
-    // A non-numeric id is never fetched, so the page shows "not found" straight away.
-    enabled: isValidId(roomId),
+    enabled: Number.isInteger(Number(roomId)),
   });
 
   const mutation = useMutation<Room, Error, Room>({

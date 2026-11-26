@@ -1,4 +1,4 @@
-// The "My bookings" page: the user's upcoming or past bookings, already filtered and sorted.
+// The controller filters and sorts the bookings before they get here.
 public class BookingListViewModel
 {
     public bool ShowPast { get; set; }

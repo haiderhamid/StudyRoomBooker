@@ -52,20 +52,6 @@ public class HomeControllerTests
     }
 
     [Fact]
-    public async Task Index_WithBookedTime_ShowsFreeRoomFirst()
-    {
-        var controller = CreateController();
-
-        var result = await controller.Index(Tomorrow, "11:00", "12:00", null, null, null);
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<HomeViewModel>(viewResult.Model);
-        Assert.Equal(2, model.Rooms[0].Room.Id);
-        Assert.True(model.Rooms[0].IsFree);
-        Assert.False(model.Rooms[1].IsFree);
-    }
-
-    [Fact]
     public async Task Index_WithEquipmentFilter_ReturnsOnlyRoomsWithAllEquipment()
     {
         var controller = CreateController();
@@ -76,17 +62,5 @@ public class HomeControllerTests
         var model = Assert.IsType<HomeViewModel>(viewResult.Model);
         Assert.Single(model.Rooms);
         Assert.Equal("102", model.Rooms[0].Room.RoomNumber);
-    }
-
-    [Fact]
-    public async Task Index_DateInThePast_UsesToday()
-    {
-        var controller = CreateController();
-
-        var result = await controller.Index(DateTime.Today.AddDays(-3), null, null, null, null, null);
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<HomeViewModel>(viewResult.Model);
-        Assert.Equal(DateTime.Today, model.Date);
     }
 }

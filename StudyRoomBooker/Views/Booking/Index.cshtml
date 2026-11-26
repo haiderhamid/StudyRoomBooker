@@ -5,7 +5,6 @@
     var today = DateTime.Today;
     var now = DateTime.Now;
 
-    // The controller has already filtered and sorted the bookings. Here they are only grouped by day.
     var days = Model.Bookings.GroupBy(b => b.StartTime.Date);
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
     var userName = User.Identity?.Name;
@@ -70,7 +69,7 @@
                             }
                         </span>
                     </div>
-                    @* Bookings that have started can't be changed, so the buttons are hidden. *@
+                    @* Started bookings can't be changed, so no buttons *@
                     @if (isMine && booking.StartTime > now)
                     {
                         <div class="item-actions">

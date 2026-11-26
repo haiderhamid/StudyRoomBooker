@@ -14,7 +14,7 @@ builder.Services.AddSerilog(config => config
 .WriteTo.Console()
 .WriteTo.File($"Logs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log"));
 
-// IgnoreCycles stops endless loops when a room points to its building and the building points back to its rooms.
+// Only matters if an entity is returned directly. The controllers return DTOs.
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
@@ -23,28 +23,24 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Users are stored in their own database, separate from rooms and bookings.
+// Users are in their own database, separate from rooms and bookings.
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("AuthDbContextConnection")));
 
-// Login with roles (Admin and Student). The error describer gives friendlier password messages.
-// Each email can only be used once, so users can log in with their email as well.
+// Roles Admin and Student. Unique email, so login with email works.
 builder.Services.AddIdentity<AuthUser, IdentityRole>(options => options.User.RequireUniqueEmail = true)
     .AddEntityFrameworkStores<AuthDbContext>()
     .AddDefaultTokenProviders()
     .AddErrorDescriber<CustomIdentityErrorDescriber>();
 
-// The key that signs the JWT tokens. In Development it comes from appsettings.Development.json, so the
-// app runs without any setup. Anywhere else it must be set, for example with the environment variable Jwt__Key.
+// In Development the key comes from appsettings.Development.json. Other environments must set Jwt__Key.
 var jwtKey = builder.Configuration["Jwt:Key"];
-if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+if (string.IsNullOrEmpty(jwtKey))
 {
-    throw new InvalidOperationException(
-        $"Jwt:Key is missing or shorter than 32 characters (environment: {builder.Environment.EnvironmentName}). " +
-        "Set it with the environment variable Jwt__Key, or run in Development where appsettings.Development.json provides it.");
+    throw new InvalidOperationException("Jwt:Key is missing. Set it with the environment variable Jwt__Key.");
 }
 
-// The API uses JWT tokens instead of cookies. The token in each request is checked here.
+// JWT instead of cookies
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -68,7 +64,6 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-// Gives errors a standard JSON format.
 builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
@@ -76,11 +71,11 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
 
-// Lets the React app on localhost call the API.
+// Only the React app may call the API
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
-        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+        policy.WithOrigins("http://localhost:4000")
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -92,7 +87,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     context.Database.Migrate();
 
-    // Only add test data if the database is empty.
+    // Test data, only if the database is empty
     if (!context.Buildings.Any())
     {
         var p35 = new Building { Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" };
@@ -184,7 +179,7 @@ using (var scope = app.Services.CreateScope())
     var authContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     authContext.Database.Migrate();
 
-    // Adds the roles and the two test users if they don't exist.
+    // Roles and the two test users, if they don't exist
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var roleName in new[] { "Admin", "Student" })
     {
@@ -210,7 +205,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Unexpected errors return a clean JSON error instead of a crash.
+// Unexpected errors give a JSON error instead of a crash
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 

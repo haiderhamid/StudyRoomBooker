@@ -1,4 +1,4 @@
-@* Weekly calendar for one room. Used on the room page and under the booking form. *@
+@* Used on the room page and under the booking form *@
 @model WeekScheduleViewModel
 @{
     var culture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
@@ -71,7 +71,6 @@
                         var start = booking.StartTime.TimeOfDay;
                         var end = booking.EndTime.TimeOfDay;
                         var style = $"top: {HomeViewModel.PercentOfDay(start)}%; height: {HomeViewModel.WidthOfSpan(start, end)}%";
-                        // Bookings the user made or joined get their own colour.
                         var isMine = booking.BookedBy == userName || booking.Participants?.Any(p => p.UserName == userName) == true;
                         var time = $"{booking.StartTime:HH:mm}–{booking.EndTime:HH:mm}";
 

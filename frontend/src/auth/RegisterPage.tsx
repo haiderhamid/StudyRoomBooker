@@ -7,7 +7,7 @@ import * as AuthService from './AuthService';
 
 export default function RegisterPage() {
   const location = useLocation();
-  // The email can come from the login page, so the user doesn't have to type it again.
+  // Email can come from the login page
   const [formData, setFormData] = useState<RegisterDto>({ username: '', email: location.state?.email ?? '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

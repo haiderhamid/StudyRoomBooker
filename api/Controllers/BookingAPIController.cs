@@ -16,7 +16,7 @@ public class BookingAPIController : ControllerBase
         _logger = logger;
     }
 
-    // Hides who made and joined the booking, unless it is your own booking or you are an admin.
+    // Hide who booked and who joined, unless it is your booking or you are an admin.
     private BookingDto ToVisibleDto(Booking booking)
     {
         var dto = ToDto(booking);
@@ -52,7 +52,7 @@ public class BookingAPIController : ControllerBase
         return booking.Participants?.Any(p => p.UserName == userName) == true;
     }
 
-    // Returns why the user can't join, or null if they can.
+    // null if the user can join, otherwise why not
     private static string? JoinError(Booking booking, string userName)
     {
         if (booking.BookedBy == userName)
@@ -79,17 +79,17 @@ public class BookingAPIController : ControllerBase
         return time.Minute % 15 == 0 && time.Second == 0;
     }
 
-    // Admins can change any booking. Students can only change their own.
+    // Admins can change any booking, students only their own.
     private bool CanManage(Booking booking)
     {
         return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
-    // Checks that the room exists, and the times: not in the past, between 07:00 and 20:00, end after start, quarter hours, and no overlap.
-    // checkPast is false when an admin saves a started booking without moving its start time.
+    // Room must exist, not in the past, 07-20, end after start, whole quarters and no overlap.
+    // checkPast is false when an admin saves a started booking without moving the start.
     private async Task ValidateBooking(Booking booking, int excludeBookingId, bool checkPast = true)
     {
-        // An unknown room gives 400 here, instead of a database error and 500 when saving.
+        // Unknown room -> 400 here instead of a database error (500) when saving
         if (await _roomRepository.GetRoomById(booking.RoomId) == null)
         {
             ModelState.AddModelError("RoomId", "The room does not exist.");
@@ -136,7 +136,6 @@ public class BookingAPIController : ControllerBase
         return Ok(bookingDtos);
     }
 
-    // Bookings the logged in user has made or joined.
     [Authorize]
     [HttpGet("mybookings")]
     public async Task<IActionResult> MyBookings()
@@ -177,10 +176,10 @@ public class BookingAPIController : ControllerBase
         {
             RoomId = bookingDto.RoomId,
             Subject = bookingDto.Subject,
-            // [Required] on the DTO makes sure the times are set before the action runs.
+            // [Required] on the DTO makes sure these are set
             StartTime = bookingDto.StartTime.GetValueOrDefault(),
             EndTime = bookingDto.EndTime.GetValueOrDefault(),
-            // BookedBy comes from the token, not from the request, so nobody can book for someone else.
+            // From the token, so nobody can book for someone else
             BookedBy = User.Identity?.Name ?? string.Empty
         };
 
@@ -197,7 +196,7 @@ public class BookingAPIController : ControllerBase
             return CreatedAtAction(nameof(GetBooking), new { id = newBooking.Id }, ToDto(newBooking));
         }
 
-        // Create also fails if someone else booked the room at the same moment.
+        // Taken by someone else at the same moment -> 409
         if (await _bookingRepository.IsRoomBooked(newBooking.RoomId, newBooking.StartTime, newBooking.EndTime, 0))
         {
             return Conflict("This room was just booked by someone else. Please choose another time.");
@@ -235,16 +234,16 @@ public class BookingAPIController : ControllerBase
             return BadRequest("A booking that has already started cannot be changed.");
         }
 
-        // Copy the new values into the saved booking, so BookedBy stays the same.
+        // Copy into the saved booking so BookedBy stays the same
         var originalStart = booking.StartTime;
         booking.RoomId = bookingDto.RoomId;
         booking.Subject = bookingDto.Subject;
         booking.StartTime = bookingDto.StartTime.GetValueOrDefault();
         booking.EndTime = bookingDto.EndTime.GetValueOrDefault();
 
-        // Only check for a past start time if the start time was changed.
+        // Only check for a past start time if the start was changed.
         await ValidateBooking(booking, id, booking.StartTime != originalStart);
-        // If people have joined, the new room must still have a seat for everyone.
+        // People who have joined need a seat in the new room too.
         var room = await _roomRepository.GetRoomById(booking.RoomId);
         if (room != null && room.Capacity < booking.SeatsTaken)
         {
@@ -263,7 +262,7 @@ public class BookingAPIController : ControllerBase
             return Ok(ToDto(booking));
         }
 
-        // Update also fails if someone else booked the room at the same moment.
+        // Same as in Create
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, id))
         {
             return Conflict("This room was just booked by someone else. Please choose another time.");
@@ -326,7 +325,7 @@ public class BookingAPIController : ControllerBase
         bool returnOk = await _bookingRepository.AddParticipant(id, userName);
         if (!returnOk)
         {
-            // Most likely someone else took the last seat at the same moment.
+            // Probably someone took the last seat at the same moment
             _logger.LogWarning("[BookingAPIController] {User} could not join booking {Id}.", userName, id);
             return Conflict("Could not join the booking. It may have just become full. Please try again.");
         }

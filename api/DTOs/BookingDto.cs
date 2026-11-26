@@ -15,25 +15,24 @@ public class BookingDto
     [StringLength(100)]
     public string Subject { get; set; } = string.Empty;
 
-    // Nullable, so [Required] can tell when a time is missing. Otherwise it would be 0001-01-01.
+    // Nullable so [Required] works. Otherwise a missing time would be 0001-01-01.
     [Required(ErrorMessage = "Please choose a start time.")]
     public DateTime? StartTime { get; set; }
 
     [Required(ErrorMessage = "Please choose an end time.")]
     public DateTime? EndTime { get; set; }
 
-    // Set by the API from the token. Empty when you are not allowed to see who booked.
+    // Set from the token. Empty if you are not allowed to see it.
     [StringLength(100)]
     public string BookedBy { get; set; } = string.Empty;
 
-    // Seats taken (the booker plus everyone who joined) and seats in the room.
+    // Includes the person who booked
     public int SeatsTaken { get; set; }
 
     public int RoomCapacity { get; set; }
 
-    // True when the logged in user has joined this booking.
     public bool IsJoined { get; set; }
 
-    // Who has joined. Only filled in for the owner and admins.
+    // Only filled in for the owner and admins
     public List<string> Participants { get; set; } = new();
 }

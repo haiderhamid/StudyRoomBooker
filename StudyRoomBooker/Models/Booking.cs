@@ -25,10 +25,10 @@ public class Booking
 
     public virtual Room? Room { get; set; }
 
-    // Other students who have joined this booking.
+    // Students who joined (not the one who booked)
     public virtual List<BookingParticipant>? Participants { get; set; }
 
-    // The person who booked plus everyone who joined. Not saved in the database.
+    // Booker + everyone who joined. Not stored in the database.
     [NotMapped]
     public int SeatsTaken => 1 + (Participants?.Count ?? 0);
 }

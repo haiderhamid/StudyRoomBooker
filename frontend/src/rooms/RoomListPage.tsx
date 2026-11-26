@@ -41,7 +41,6 @@ export default function RoomListPage() {
     },
   });
 
-  // The room must have all the chosen equipment.
   const matchingRooms = rooms.filter(room =>
     facilityIds.every(id => room.facilityIds.includes(id)));
 

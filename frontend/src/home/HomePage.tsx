@@ -50,18 +50,16 @@ export default function HomePage() {
   const isFiltered = date !== todayString() || fromTime !== '' || toTime !== '' ||
     buildingId !== '' || minCapacity !== '' || facilityIds.length > 0;
 
-  // The room must have all the chosen equipment.
   const matchingRooms = rooms.filter(room =>
     facilityIds.every(id => room.facilityIds.includes(id)));
 
-  // A room is free if no booking overlaps the chosen time.
+  // Free if no booking overlaps the chosen time
   const isFree = (roomId: number) =>
     !bookingsOnDate.some(b =>
       b.roomId === roomId &&
       b.startTime.substring(11, 16) < toTime &&
       b.endTime.substring(11, 16) > fromTime);
 
-  // When a time is chosen, free rooms are shown first.
   const freeRooms = matchingRooms.filter(room => isFree(room.id));
   const bookedRooms = matchingRooms.filter(room => !isFree(room.id));
   const sortedRooms = hasTime ? [...freeRooms, ...bookedRooms] : matchingRooms;
@@ -83,7 +81,6 @@ export default function HomePage() {
       previous.includes(id) ? previous.filter(f => f !== id) : [...previous, id]);
   };
 
-  // Moves the end time when the start time changes.
   const handleFromTimeChange = (newFrom: string) => {
     setToTime(moveEndTime(fromTime, toTime, newFrom));
     setFromTime(newFrom);
@@ -98,7 +95,6 @@ export default function HomePage() {
     setFacilityIds([]);
   };
 
-  // The Book button sends room, date and time to the booking form.
   const bookLink = (roomId: number, withTime: boolean) => {
     const params = new URLSearchParams({ roomId: String(roomId), date });
     if (withTime) {
@@ -263,7 +259,7 @@ export default function HomePage() {
                     : <span className="status status-busy">Booked</span>)
                   : <span className="status-summary">{bookingSummary(room.id)}</span>}
               </span>
-              {/* A room that is booked at the chosen time opens the form without that time, so the user picks another. */}
+              {/* Booked at the chosen time: open the form without the time */}
               {hasTime && !isFree(room.id)
                 ? <Link to={bookLink(room.id, false)} className="btn btn-sm btn-outline-secondary">Other time</Link>
                 : <Link to={bookLink(room.id, hasTime)} className="btn btn-sm btn-primary">Book</Link>}

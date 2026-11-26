@@ -7,8 +7,7 @@ import { useAuth } from '../auth/useAuth';
 export default function NavMenu() {
   const { user, isAdmin } = useAuth();
   const location = useLocation();
-  // The mobile menu is opened and closed by us, so it can close when the user goes to another page.
-  // Otherwise it stays open on top of the new page.
+  // Controlled, so the mobile menu closes when the page changes
   const [expanded, setExpanded] = useState<boolean>(false);
   const [menuLocation, setMenuLocation] = useState<string>(location.key);
   if (location.key !== menuLocation) {

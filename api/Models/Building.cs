@@ -14,13 +14,13 @@ public class Building
 
     public virtual List<Room>? Rooms { get; set; }
 
-    // Short name for the building, for example "Pilestredet 35" becomes "P35". It is not saved in the database.
+    // "Pilestredet 35" -> "P35", not stored in the database
     public string ShortName
     {
         get
         {
             var shortName = "";
-            // Name can be null while an empty form is being validated, so use an empty string then.
+            // Name can be null while an empty form is validated
             foreach (var word in (Name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries))
             {
                 shortName += char.IsDigit(word[0]) ? word : char.ToUpper(word[0]).ToString();

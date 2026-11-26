@@ -64,7 +64,7 @@ public class RoomRepository : IRoomRepository
     {
         try
         {
-            // Removes the old equipment first, then saves the room with the new equipment.
+            // Remove the old equipment rows first, then save the new ones.
             var oldFacilities = _context.RoomFacilities.Where(rf => rf.RoomId == room.Id);
             _context.RoomFacilities.RemoveRange(oldFacilities);
 
@@ -100,7 +100,6 @@ public class RoomRepository : IRoomRepository
         }
     }
 
-    // Search with optional filters. A filter is only used if it has a value.
     public async Task<IEnumerable<Room>?> Search(int? buildingId, int? minCapacity)
     {
         try

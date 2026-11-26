@@ -1,4 +1,3 @@
-// All times you can book, from 07:00 to 20:00 every 15 minutes.
 export const timeOptions: string[] = [];
 for (let minutes = 7 * 60; minutes <= 20 * 60; minutes += 15) {
   const hours = String(Math.floor(minutes / 60)).padStart(2, '0');
@@ -16,7 +15,7 @@ export function todayString(): string {
   return toDateString(new Date());
 }
 
-// Gets the Monday of the week.
+// Monday is the first day of the week
 export function startOfWeek(date: Date): Date {
   const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const daysSinceMonday = (monday.getDay() + 6) % 7;
@@ -30,7 +29,7 @@ export function addDays(date: Date, days: number): Date {
   return result;
 }
 
-// Week number like in Norwegian calendars (ISO 8601).
+// Week number like in Norwegian calendars (ISO 8601)
 export function isoWeekNumber(date: Date): number {
   const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNumber = target.getUTCDay() || 7;
@@ -49,7 +48,7 @@ function minutesToTime(minutes: number): string {
   return `${hours}:${mins}`;
 }
 
-// Keeps the booking the same length when the start time changes. Never later than 20:00.
+// Same length as before, but never later than 20:00
 export function moveEndTime(oldFrom: string, oldTo: string, newFrom: string): string {
   if (!newFrom) {
     return oldTo;
@@ -62,7 +61,7 @@ export function moveEndTime(oldFrom: string, oldTo: string, newFrom: string): st
   return minutesToTime(end);
 }
 
-// Hides times that have already passed today.
+// Today: only times that have not passed
 export function availableTimes(date: string, selectedTime: string): string[] {
   if (date !== todayString()) {
     return timeOptions;

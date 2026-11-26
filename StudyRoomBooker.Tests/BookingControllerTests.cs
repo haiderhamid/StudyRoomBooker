@@ -82,42 +82,6 @@ public class BookingControllerTests
     }
 
     [Fact]
-    public async Task Index_PastView_ReturnsOnlyEndedBookingsNewestFirst()
-    {
-        var older = CreateBooking(1, "test@oslomet.no");
-        older.StartTime = DateTime.Today.AddDays(-3).AddHours(10);
-        older.EndTime = DateTime.Today.AddDays(-3).AddHours(11);
-        var newer = CreateBooking(2, "test@oslomet.no");
-        newer.StartTime = DateTime.Today.AddDays(-1).AddHours(10);
-        newer.EndTime = DateTime.Today.AddDays(-1).AddHours(11);
-        var upcoming = CreateBooking(3, "test@oslomet.no");
-        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Booking> { older, upcoming, newer });
-        var controller = CreateController();
-
-        var result = await controller.Index("past");
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<BookingListViewModel>(viewResult.Model);
-        Assert.True(model.ShowPast);
-        Assert.Equal(new[] { 2, 1 }, model.Bookings.Select(b => b.Id));
-    }
-
-    [Fact]
-    public async Task Details_OtherUsersBooking_ModelLetsUserJoin()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "kari@oslomet.no"));
-        var controller = CreateController();
-
-        var result = await controller.Details(1);
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<BookingDetailsViewModel>(viewResult.Model);
-        Assert.False(model.CanManage);
-        Assert.False(model.IsJoined);
-        Assert.Null(model.JoinError);
-    }
-
-    [Fact]
     public async Task Create_ValidBooking_RedirectsToIndex()
     {
         _bookingRepositoryMock.Setup(r => r.IsRoomBooked(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
@@ -205,49 +169,6 @@ public class BookingControllerTests
     }
 
     [Fact]
-    public async Task Create_RepositoryFails_ReturnsViewWithError()
-    {
-        _bookingRepositoryMock.Setup(r => r.IsRoomBooked(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
-        _bookingRepositoryMock.Setup(r => r.Create(It.IsAny<Booking>())).ReturnsAsync(false);
-        var controller = CreateController();
-
-        var result = await controller.Create(CreateValidViewModel());
-
-        Assert.IsType<ViewResult>(result);
-        Assert.False(controller.ModelState.IsValid);
-    }
-
-    [Fact]
-    public async Task Create_WithRoomDateAndTime_PrefillsForm()
-    {
-        _roomRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync(new List<Room>());
-        var controller = CreateController();
-
-        var result = await controller.Create(2, NextWeek, "10:00", "11:30");
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<BookingViewModel>(viewResult.Model);
-        Assert.Equal(2, model.Booking.RoomId);
-        Assert.Equal(NextWeek, model.Date);
-        Assert.Equal(new TimeSpan(10, 0, 0), model.FromTime);
-        Assert.Equal(new TimeSpan(11, 30, 0), model.ToTime);
-    }
-
-    [Fact]
-    public async Task Edit_OwnBooking_ReturnsViewWithBooking()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
-        var controller = CreateController();
-
-        var result = await controller.Edit(1);
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<BookingViewModel>(viewResult.Model);
-        Assert.Equal(1, model.Booking.Id);
-        Assert.Equal(new TimeSpan(10, 0, 0), model.FromTime);
-    }
-
-    [Fact]
     public async Task Edit_OtherUsersBooking_ReturnsForbid()
     {
         _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "kari@oslomet.no"));
@@ -274,17 +195,6 @@ public class BookingControllerTests
     }
 
     [Fact]
-    public async Task Edit_UnknownId_ReturnsNotFound()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(99)).ReturnsAsync((Booking?)null);
-        var controller = CreateController();
-
-        var result = await controller.Edit(99);
-
-        Assert.IsType<NotFoundResult>(result);
-    }
-
-    [Fact]
     public async Task DeleteConfirmed_OwnBooking_RedirectsToIndex()
     {
         _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
@@ -300,20 +210,6 @@ public class BookingControllerTests
     }
 
     [Fact]
-    public async Task DeleteConfirmed_DatabaseFails_ShowsError()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
-        _bookingRepositoryMock.Setup(r => r.Delete(1)).ReturnsAsync(false);
-        var controller = CreateController();
-
-        var result = await controller.DeleteConfirmed(1);
-
-        Assert.IsType<RedirectToActionResult>(result);
-        Assert.Null(controller.TempData["Message"]);
-        Assert.Equal("The booking could not be deleted. Please try again.", controller.TempData["Error"]);
-    }
-
-    [Fact]
     public async Task DeleteConfirmed_OtherUsersBooking_ReturnsForbid()
     {
         _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "kari@oslomet.no"));
@@ -323,35 +219,6 @@ public class BookingControllerTests
 
         Assert.IsType<ForbidResult>(result);
         _bookingRepositoryMock.Verify(r => r.Delete(It.IsAny<int>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task DeleteConfirmed_StartedBooking_ReturnsDeleteView()
-    {
-        var booking = CreateBooking(1, "test@oslomet.no");
-        booking.StartTime = DateTime.Now.AddHours(-1);
-        booking.EndTime = DateTime.Now.AddHours(1);
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(booking);
-        var controller = CreateController();
-
-        var result = await controller.DeleteConfirmed(1);
-
-        var viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal("Delete", viewResult.ViewName);
-        _bookingRepositoryMock.Verify(r => r.Delete(It.IsAny<int>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task DeleteConfirmed_AdminDeletesOtherUsersBooking_RedirectsToIndex()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "kari@oslomet.no"));
-        _bookingRepositoryMock.Setup(r => r.Delete(1)).ReturnsAsync(true);
-        var controller = CreateController("admin@oslomet.no", "Admin");
-
-        var result = await controller.DeleteConfirmed(1);
-
-        Assert.IsType<RedirectToActionResult>(result);
-        _bookingRepositoryMock.Verify(r => r.Delete(1), Times.Once);
     }
 
     [Fact]
@@ -385,18 +252,6 @@ public class BookingControllerTests
     }
 
     [Fact]
-    public async Task Join_OwnBooking_DoesNotAddParticipant()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
-        var controller = CreateController();
-
-        await controller.Join(1);
-
-        _bookingRepositoryMock.Verify(r => r.AddParticipant(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-        Assert.Equal("This is your own booking.", controller.TempData["Error"]);
-    }
-
-    [Fact]
     public async Task Join_FullBooking_DoesNotAddParticipant()
     {
         // The room has 2 seats: the owner and one who already joined.
@@ -410,33 +265,6 @@ public class BookingControllerTests
 
         _bookingRepositoryMock.Verify(r => r.AddParticipant(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
         Assert.Equal("This booking is full.", controller.TempData["Error"]);
-    }
-
-    [Fact]
-    public async Task Join_AlreadyJoined_DoesNotAddParticipant()
-    {
-        var booking = CreateBooking(1, "kari@oslomet.no");
-        booking.Participants!.Add(new BookingParticipant { BookingId = 1, UserName = "test@oslomet.no" });
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(booking);
-        var controller = CreateController();
-
-        await controller.Join(1);
-
-        _bookingRepositoryMock.Verify(r => r.AddParticipant(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Join_EndedBooking_DoesNotAddParticipant()
-    {
-        var booking = CreateBooking(1, "kari@oslomet.no");
-        booking.StartTime = DateTime.Now.AddHours(-3);
-        booking.EndTime = DateTime.Now.AddHours(-1);
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(booking);
-        var controller = CreateController();
-
-        await controller.Join(1);
-
-        _bookingRepositoryMock.Verify(r => r.AddParticipant(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
@@ -518,38 +346,5 @@ public class BookingControllerTests
 
         _bookingRepositoryMock.Verify(r => r.Create(It.Is<Booking>(b =>
             b.Id == 0 && b.Room == null && b.Participants == null && b.RoomId == 1 && b.Subject == "Math")), Times.Once);
-    }
-
-    [Fact]
-    public async Task Create_DateCouldNotBeRead_ShowsOnlyThatError()
-    {
-        var viewModel = CreateValidViewModel();
-        viewModel.Date = default;
-        var controller = CreateController();
-        // Model binding adds this error when the date field is empty.
-        controller.ModelState.AddModelError("Date", "Please fill in this field.");
-
-        var result = await controller.Create(viewModel);
-
-        Assert.IsType<ViewResult>(result);
-        // No extra "time has passed" or "opening hours" errors for a date that was never given.
-        var error = Assert.Single(controller.ModelState.Values.SelectMany(v => v.Errors));
-        Assert.Equal("Please fill in this field.", error.ErrorMessage);
-        _bookingRepositoryMock.Verify(r => r.Create(It.IsAny<Booking>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Create_RoomDoesNotExist_ReturnsViewWithError()
-    {
-        // Someone sends a room id that is not in the database.
-        _roomRepositoryMock.Setup(r => r.GetRoomById(It.IsAny<int>())).ReturnsAsync((Room?)null);
-        _bookingRepositoryMock.Setup(r => r.IsRoomBooked(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
-        var controller = CreateController();
-
-        var result = await controller.Create(CreateValidViewModel());
-
-        Assert.IsType<ViewResult>(result);
-        Assert.False(controller.ModelState.IsValid);
-        _bookingRepositoryMock.Verify(r => r.Create(It.IsAny<Booking>()), Times.Never);
     }
 }

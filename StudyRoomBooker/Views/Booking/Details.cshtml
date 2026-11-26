@@ -33,7 +33,7 @@
                 <dd>@booking.StartTime.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("en-GB"))</dd>
                 <dt>Time</dt>
                 <dd>@booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")</dd>
-                @* Only the owner and admins can see who is in the booking. *@
+                @* Only the owner and admins can see who is in the booking *@
                 @if (canManage)
                 {
                     <dt>Booked by</dt>

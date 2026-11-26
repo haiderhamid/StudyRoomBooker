@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-// Wraps a Booking together with the list of rooms to show in the RoomId dropdown.
-// We need this because a Booking on its own has no place to carry the dropdown options.
+// The booking plus the dropdown lists for the Create and Edit forms.
 public class BookingViewModel
 {
     public Booking Booking { get; set; } = new Booking();

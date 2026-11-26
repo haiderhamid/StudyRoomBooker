@@ -623,7 +623,7 @@ a.item-title:hover {
   background-color: var(--srb-booked);
 }
 
-/* The part of today that has already passed, so it doesn't look free. */
+/* Passed part of today */
 .availability-past {
   position: absolute;
   top: 0;
@@ -1199,14 +1199,13 @@ a.schedule-booking.is-mine:hover {
   color: var(--srb-busy) !important;
 }
 
-/* Adds a red star after the label of fields that must be filled in. */
+/* Red star on required fields */
 .form-label.required::after {
   content: " *";
   color: var(--srb-busy);
 }
 
-/* When the chosen time clashes with a booking, only the red frame is shown,
-   so the text of the booking under it can still be read. */
+/* On a clash only the red frame is shown, so the booking text under it can still be read */
 .schedule-selected.is-conflict {
   background-color: transparent;
 }

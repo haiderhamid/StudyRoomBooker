@@ -23,8 +23,7 @@ import BookingCreatePage from './bookings/BookingCreatePage';
 import BookingUpdatePage from './bookings/BookingUpdatePage';
 import BookingDetailsPage from './bookings/BookingDetailsPage';
 
-// Errors like 404 Not Found won't change if the request is sent again, so only other errors are retried.
-// Without this a missing booking showed a spinner for about 7 seconds before the error.
+// 4xx errors (like 404) won't change if we try again, so only other errors are retried.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

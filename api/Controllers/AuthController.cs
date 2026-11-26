@@ -23,8 +23,8 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        // Login accepts a username or an email, so a username must not be another account's email,
-        // and an email must not be another account's username. Otherwise login could find the wrong account.
+        // Login accepts username or email, so a username can't be another user's email,
+        // and the other way round. Otherwise login could find the wrong account.
         if (await _userManager.FindByEmailAsync(registerDto.Username) != null)
         {
             ModelState.AddModelError("Username", $"The username {registerDto.Username} is already taken.");
@@ -61,11 +61,10 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
-        // Users can log in with either their username or their email.
         var user = await _userManager.FindByNameAsync(loginDto.Username)
             ?? await _userManager.FindByEmailAsync(loginDto.Username);
 
-        // Tells the user when no account exists, so the frontend can send them to register.
+        // 404, so React can show a link to register
         if (user == null)
         {
             _logger.LogWarning("[AuthController] Login attempt for unknown user {Username}.", loginDto.Username);
@@ -83,7 +82,7 @@ public class AuthController : ControllerBase
         return Unauthorized("Wrong password. Please try again.");
     }
 
-    // Makes the token React sends with every request. It holds the username and roles, and expires after 2 hours.
+    // Token with the username and roles, valid for 2 hours
     private async Task<string> GenerateJwtToken(AuthUser user)
     {
         var jwtKey = _configuration["Jwt:Key"];
@@ -105,7 +104,7 @@ public class AuthController : ControllerBase
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        // Adds the user's roles, so [Authorize(Roles = "Admin")] works.
+        // Needed for [Authorize(Roles = "Admin")]
         var roles = await _userManager.GetRolesAsync(user);
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

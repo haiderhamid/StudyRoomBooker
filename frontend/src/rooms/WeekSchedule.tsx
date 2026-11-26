@@ -22,7 +22,6 @@ interface WeekScheduleProps {
   selection?: ScheduleSelection;
 }
 
-// Where a time is in the day column, in percent.
 function toPercent(time: string): number {
   const minutes = Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
   const clamped = Math.min(Math.max(minutes, DAY_START * 60), DAY_END * 60);
@@ -43,7 +42,7 @@ export default function WeekSchedule({
     days.push(addDays(weekStart, i));
   }
   const today = todayString();
-  // True if the chosen time overlaps a booking. Shows a red frame.
+  // Red frame if the chosen time overlaps a booking
   const selectionIsBooked = !!selection && bookings.some(b =>
     b.startTime.substring(0, 10) === selection.date &&
     b.startTime.substring(11, 16) < selection.to &&
@@ -116,7 +115,6 @@ export default function WeekSchedule({
                   const top = toPercent(from);
                   const style = { top: `${top}%`, height: `${toPercent(to) - top}%` };
                   const className = `schedule-booking${isMine(booking) ? ' is-mine' : ''}`;
-                  // Every booking links to its own page, where you can join it.
                   return (
                     <Link
                       key={booking.id}

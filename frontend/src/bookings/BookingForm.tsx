@@ -62,7 +62,6 @@ export default function BookingForm({
     queryFn: BookingService.fetchBookings,
   });
 
-  // Moves the end time when the start time changes.
   const handleFromTimeChange = (newFrom: string) => {
     setToTime(moveEndTime(fromTime, toTime, newFrom));
     setFromTime(newFrom);
@@ -74,17 +73,16 @@ export default function BookingForm({
   };
 
   const weekEnd = toDateString(addDays(weekStart, 7));
-  // Bookings for the chosen room and week. When editing, the booking itself is left out.
+  // Leave out the booking being edited
   const roomBookings = bookings.filter(b =>
     String(b.roomId) === roomId &&
     b.id !== initialValues?.id &&
     b.startTime.substring(0, 10) >= toDateString(weekStart) &&
     b.startTime.substring(0, 10) < weekEnd);
   const selection = fromTime && toTime && toTime > fromTime ? { date, from: fromTime, to: toTime } : undefined;
-  // Bookings you made or joined get their own colour in the schedule.
   const isMine = (booking: Booking) => !!user && (booking.bookedBy === user.sub || !!booking.isJoined);
 
-  // Checks the form before it is sent. The API checks everything again.
+  // The API checks everything again
   const validate = (): BookingFormErrors => {
     const newErrors: BookingFormErrors = {};
     if (!roomId) {
@@ -122,7 +120,7 @@ export default function BookingForm({
       subject: subject.trim(),
       startTime: `${date}T${fromTime}:00`,
       endTime: `${date}T${toTime}:00`,
-      // The API sets BookedBy from the token, so it is not part of the form.
+      // The API sets BookedBy from the token
       bookedBy: initialValues?.bookedBy ?? '',
     });
   };

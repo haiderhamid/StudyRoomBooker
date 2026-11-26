@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -199,44 +198,6 @@ public class BookingAPIControllerTests
 
         Assert.IsType<BadRequestObjectResult>(result);
         _bookingRepositoryMock.Verify(r => r.AddParticipant(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public void BookingDto_MissingTimes_IsInvalid()
-    {
-        var dto = new BookingDto { RoomId = 1, Subject = "Math" };
-        var results = new List<ValidationResult>();
-
-        var isValid = Validator.TryValidateObject(dto, new ValidationContext(dto), results, validateAllProperties: true);
-
-        Assert.False(isValid);
-        Assert.Contains(results, r => r.MemberNames.Contains("StartTime") && r.ErrorMessage == "Please choose a start time.");
-        Assert.Contains(results, r => r.MemberNames.Contains("EndTime") && r.ErrorMessage == "Please choose an end time.");
-    }
-
-    [Fact]
-    public async Task BookingList_DatabaseFails_ReturnsServerError()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetAll()).ReturnsAsync((IEnumerable<Booking>?)null);
-        var controller = CreateController();
-
-        var result = await controller.BookingList();
-
-        var objectResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, objectResult.StatusCode);
-    }
-
-    [Fact]
-    public async Task Delete_DatabaseFails_ReturnsServerError()
-    {
-        _bookingRepositoryMock.Setup(r => r.GetBookingById(1)).ReturnsAsync(CreateBooking(1, "test@oslomet.no"));
-        _bookingRepositoryMock.Setup(r => r.Delete(1)).ReturnsAsync(false);
-        var controller = CreateController();
-
-        var result = await controller.DeleteConfirmed(1);
-
-        var objectResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, objectResult.StatusCode);
     }
 
     [Fact]

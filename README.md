@@ -7,7 +7,7 @@ The project contains two sub-applications that solve the same task:
 | Folder | Description |
 |---|---|
 | `StudyRoomBooker/` | Sub-app 1: ASP.NET Core 10 MVC (server-rendered views) |
-| `StudyRoomBooker.Tests/` | xUnit unit tests for the MVC controllers |
+| `StudyRoomBooker.Tests/` | xUnit tests for the MVC controllers (one of them runs against SQLite in memory) |
 | `api.Tests/` | xUnit unit tests for the API booking controller |
 | `api/` | Sub-app 2, backend: ASP.NET Core 10 Web API with JWT authentication |
 | `frontend/` | Sub-app 2, frontend: React + TypeScript (Vite) |
@@ -50,7 +50,7 @@ Terminal 1, the API:
 
 The API runs on http://localhost:5246. API documentation (Scalar): http://localhost:5246/scalar/v1
 
-`dotnet run` starts the API in Development, where the JWT signing key is read from `api/appsettings.Development.json`. In any other environment the API refuses to start until a key of at least 32 characters is set, for example with the environment variable `Jwt__Key`.
+`dotnet run` starts the API in Development, where the JWT signing key is read from `api/appsettings.Development.json`. In any other environment the API refuses to start until a key is set, for example with the environment variable `Jwt__Key` (HS256 needs at least 32 characters).
 
 Terminal 2, the frontend:
 
@@ -59,6 +59,8 @@ Terminal 2, the frontend:
     npm run dev
 
 Open http://localhost:4000
+
+The API only accepts requests from this address (CORS), so the frontend has to run on port 4000.
 
 ## Run the unit tests
 

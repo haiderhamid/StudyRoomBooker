@@ -1,7 +1,7 @@
 import type { Booking } from '../types/booking';
 import { API_URL, getAuthHeaders, handleResponse, handleEmptyResponse } from '../shared/apiHelpers';
 
-// Sends the token too, so the API can show who booked on your own bookings.
+// Token is sent so the API shows names on your own bookings
 export async function fetchBookings(): Promise<Booking[]> {
   const response = await fetch(`${API_URL}/api/bookingapi/bookinglist`, {
     headers: getAuthHeaders(),
@@ -9,7 +9,6 @@ export async function fetchBookings(): Promise<Booking[]> {
   return handleResponse<Booking[]>(response);
 }
 
-// Only the bookings of the logged-in user.
 export async function fetchMyBookings(): Promise<Booking[]> {
   const response = await fetch(`${API_URL}/api/bookingapi/mybookings`, {
     headers: getAuthHeaders(),
@@ -49,7 +48,6 @@ export async function deleteBooking(bookingId: number): Promise<void> {
   });
   return handleEmptyResponse(response);
 }
-// Join someone else's booking as the logged-in user.
 export async function joinBooking(bookingId: number): Promise<void> {
   const response = await fetch(`${API_URL}/api/bookingapi/join/${bookingId}`, {
     method: 'POST',

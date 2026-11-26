@@ -84,7 +84,6 @@ public class BuildingController : Controller
             return NotFound();
         }
 
-        // Return 404 if the building doesn't exist, instead of a save that fails.
         if (await _buildingRepository.GetBuildingById(id) == null)
         {
             _logger.LogWarning("[BuildingController] Building with Id {Id} not found for editing.", id);

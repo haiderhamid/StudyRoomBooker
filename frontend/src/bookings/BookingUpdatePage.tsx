@@ -5,7 +5,6 @@ import BookingForm from './BookingForm';
 import type { Booking } from '../types/booking';
 import * as BookingService from './BookingService';
 import { useAuth } from '../auth/useAuth';
-import { isValidId } from '../shared/apiHelpers';
 
 export default function BookingUpdatePage() {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -16,8 +15,7 @@ export default function BookingUpdatePage() {
   const { data: booking, isLoading, error } = useQuery<Booking, Error>({
     queryKey: ['booking', bookingId],
     queryFn: () => BookingService.fetchBookingById(bookingId!),
-    // A non-numeric id is never fetched, so the page shows "not found" straight away.
-    enabled: isValidId(bookingId),
+    enabled: Number.isInteger(Number(bookingId)),
   });
 
   const mutation = useMutation<Booking, Error, Booking>({
@@ -45,7 +43,7 @@ export default function BookingUpdatePage() {
     return <Alert variant="warning">Booking not found.</Alert>;
   }
 
-  // Only the owner or an admin can edit, and not after the booking has started.
+  // Only the owner or an admin, and not after the booking has started
   if (!isAdmin && booking.bookedBy !== user?.sub) {
     return <Alert variant="warning">You can only edit your own bookings.</Alert>;
   }

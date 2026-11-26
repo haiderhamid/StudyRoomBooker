@@ -17,12 +17,11 @@ public class BookingController : Controller
         _logger = logger;
     }
 
-    // Shows the bookings the logged in user has made or joined. 
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index(string? view = null)
     {
-        // "past" shows bookings that have ended, newest first. Otherwise upcoming bookings, soonest first.
+        // view=past shows ended bookings, newest first
         var showPast = view == "past";
         var bookings = await _bookingRepository.GetAll();
         if (bookings == null)
@@ -41,7 +40,6 @@ public class BookingController : Controller
         return View(new BookingListViewModel { ShowPast = showPast, Bookings = visibleBookings.ToList() });
     }
 
-    // Shows one booking. Here other students can see how many seats are left and join.
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
@@ -118,7 +116,7 @@ public class BookingController : Controller
             TempData["Error"] = "Could not leave the booking. Please try again.";
         }
 
-        // Only go back to pages on our own site, so the link can't send the user somewhere else.
+        // Only redirect to our own pages
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);
@@ -131,7 +129,7 @@ public class BookingController : Controller
         return booking.Participants?.Any(p => p.UserName == userName) == true;
     }
 
-    // Returns why the user can't join, or null if they can.
+    // null if the user can join, otherwise the reason why not
     private string? JoinError(Booking booking, string userName)
     {
         if (booking.BookedBy == userName)
@@ -153,7 +151,6 @@ public class BookingController : Controller
         return null;
     }
 
-    // What the Details, Delete and Started views need to know about the booking and the user.
     private BookingDetailsViewModel CreateDetailsViewModel(Booking booking)
     {
         var userName = User.Identity?.Name;
@@ -167,7 +164,6 @@ public class BookingController : Controller
         };
     }
 
-    // Makes the list of rooms for the dropdown in Create and Edit.
     private async Task<List<SelectListItem>> GetRoomSelectListAsync()
     {
         var rooms = await _roomRepository.GetAll() ?? new List<Room>();
@@ -178,7 +174,6 @@ public class BookingController : Controller
         }).ToList();
     }
 
-    // Times from 07.00 to 20.00, every 15 minutes. 
     private List<SelectListItem> GetTimeSelectList()
     {
         var times = new List<SelectListItem>();
@@ -193,13 +188,12 @@ public class BookingController : Controller
         return times;
     }
 
-    // Admins can change any booking, students can only change their own. 
+    // Admins can manage all bookings, students only their own.
     private bool CanManage(Booking booking)
     {
         return User.IsInRole("Admin") || booking.BookedBy == User.Identity?.Name;
     }
 
-    // Logs when a user tries to change or delete a booking they don't own, then returns 403.
     private IActionResult ForbidAndLog(int id, string action)
     {
         _logger.LogWarning("[BookingController] {User} tried to {Action} booking {Id} without permission.",
@@ -207,14 +201,14 @@ public class BookingController : Controller
         return Forbid();
     }
 
-    // Students can't change or delete a booking after it has started. Admins can. 
+    // Students can't change or delete a booking after it has started, admins can.
     private bool HasStarted(Booking booking)
     {
         return booking.StartTime <= DateTime.Now && !User.IsInRole("Admin");
     }
 
-    // Checks the times: end after start, quarter hours, not in the past and between 7 am to 8 pm.
-    // checkPast is false when an admin saves a started booking without moving its start time.
+    // Booking rules: end after start, whole quarters, 07-20 on the same day, not in the past.
+    // checkPast is false when an admin saves a started booking without moving the start.
     private void ValidateTimes(Booking booking, bool checkPast = true)
     {
         if (booking.EndTime <= booking.StartTime)
@@ -240,8 +234,8 @@ public class BookingController : Controller
         }
     }
 
-    // False when the form value could not be read, for example an empty date or a time like "abc".
-    // Checking such a field further would only add confusing messages, like "time has passed".
+    // False if the form value couldn't be read (empty date, "abc" etc). Then we skip the other
+    // checks for that field, otherwise the user also gets "time has passed" and similar.
     private bool IsRead(string key)
     {
         return ModelState.GetFieldValidationState(key) != ModelValidationState.Invalid;
@@ -252,7 +246,7 @@ public class BookingController : Controller
         return time.Minute % 15 == 0 && time.Second == 0;
     }
 
-    // Room, date and time come from the Book button, so the form is already filled in.
+    // Default is the next quarter hour. From 19:00 it starts at 09:00 the next day.
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Create(int? roomId = null, DateTime? date = null, string? from = null, string? to = null)
@@ -300,32 +294,29 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
-        // A new booking is made with only the fields from the form. Anything else someone adds
-        // to the request, like a new room or participants, is ignored.
+        // Only take the fields from the form, so extra fields in the request are ignored (overposting).
         var booking = new Booking
         {
             RoomId = viewModel.Booking.RoomId,
             Subject = viewModel.Booking.Subject,
             StartTime = viewModel.Date.Date.Add(viewModel.FromTime),
             EndTime = viewModel.Date.Date.Add(viewModel.ToTime),
-            // BookedBy is set from the logged in user, not from the form, so that nobody can book in someone else's name.
+            // From the logged in user, never from the form
             BookedBy = User.Identity?.Name ?? string.Empty
         };
-        // Field is not in the form so it is removed from the validation.
+        // BookedBy isn't in the form
         ModelState.Remove("Booking.BookedBy");
 
-        // Fields that could not be read already have an error, so they are not checked further.
         var timesAreRead = IsRead("Date") && IsRead("FromTime") && IsRead("ToTime");
         if (timesAreRead)
         {
             ValidateTimes(booking);
         }
-        // The room must exist, otherwise the database would refuse the booking.
+        // The room must exist, or the database refuses the booking.
         if (IsRead("Booking.RoomId") && await _roomRepository.GetRoomById(booking.RoomId) == null)
         {
             ModelState.AddModelError("Booking.RoomId", "Please choose a room from the list.");
         }
-        // Checks if the room is already booked at this time.
         if (timesAreRead && await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
@@ -340,13 +331,13 @@ public class BookingController : Controller
                 TempData["Message"] = "Your booking has been created.";
                 return RedirectToAction("Index");
             }
-            // Create also fails if someone else booked the room at the same moment.
+            // Can also fail if someone booked the same time just now.
             ModelState.AddModelError("", await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0)
                 ? "This room was just booked by someone else. Please choose another time."
                 : "An unexpected error occurred while creating the booking. Please try again.");
         }
 
-        // The room list is not sent with the form so we load it again
+        // The dropdowns aren't posted back, so load them again
         viewModel.RoomSelectList = await GetRoomSelectListAsync();
         viewModel.TimeSelectList = GetTimeSelectList();
         return View(viewModel);
@@ -394,8 +385,7 @@ public class BookingController : Controller
         {
             return NotFound();
         }
-        // Loads the saved booking and copies the new values into it. 
-        // Keeps BookedBy unchanged and lets us check who owns the booking. 
+        // Load the saved booking so BookedBy stays the same and we can check the owner.
         var booking = await _bookingRepository.GetBookingById(id);
         if (booking == null)
         {
@@ -421,14 +411,13 @@ public class BookingController : Controller
         booking.EndTime = viewModel.Date.Date.Add(viewModel.ToTime);
         ModelState.Remove("Booking.BookedBy");
 
-        // Fields that could not be read already have an error, so they are not checked further.
         var timesAreRead = IsRead("Date") && IsRead("FromTime") && IsRead("ToTime");
         if (timesAreRead)
         {
-            // Only check for a past start time if the start time was changed.
+            // Only check for a past start time if the start was changed.
             ValidateTimes(booking, booking.StartTime != originalStart);
         }
-        // If people have joined, the new room must still have a seat for everyone.
+        // People who have joined need a seat in the new room too.
         if (IsRead("Booking.RoomId"))
         {
             var room = await _roomRepository.GetRoomById(booking.RoomId);
@@ -442,7 +431,7 @@ public class BookingController : Controller
             }
         }
 
-        // Same check as in Create, but skips the booking we are editing. 
+        // Skip the booking we are editing
         if (timesAreRead && await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
         {
             ModelState.AddModelError("", "This room is already booked in that time period.");
@@ -457,7 +446,7 @@ public class BookingController : Controller
                 TempData["Message"] = "Your changes have been saved.";
                 return RedirectToAction("Index");
             }
-            // Update also fails if someone else booked the room at the same moment.
+            // Same as in Create
             ModelState.AddModelError("", await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id)
                 ? "This room was just booked by someone else. Please choose another time."
                 : "An unexpected error occurred while updating the booking. Please try again.");
@@ -492,7 +481,7 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        // Checks that the booking exists and that the user is allowed to delete it. 
+        // Check again here, the GET page can be skipped.
         var booking = await _bookingRepository.GetBookingById(id);
         if (booking == null)
         {

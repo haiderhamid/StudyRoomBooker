@@ -9,7 +9,7 @@ interface AvailabilityBarProps {
   bookings: Booking[];
   selectedFrom?: string;
   selectedTo?: string;
-  // True for today. The hours that have passed are greyed out, so they don't look free.
+  // Today only: grey out the hours that have passed
   showPast?: boolean;
 }
 
@@ -17,7 +17,6 @@ function timeToMinutes(time: string): number {
   return Number(time.substring(0, 2)) * 60 + Number(time.substring(3, 5));
 }
 
-// Where a time is on the 07-20 bar, in percent.
 function toPercent(minutes: number): number {
   return ((minutes - DAY_START) / DAY_LENGTH) * 100;
 }

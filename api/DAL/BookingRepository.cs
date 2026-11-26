@@ -43,13 +43,13 @@ public class BookingRepository : IBookingRepository
         }
     }
 
-    // Returns false if the room was booked by someone else at the same moment, or if saving fails.
+    // false if the room was taken at the same moment or saving failed
     public async Task<bool> Create(Booking booking)
     {
         try
         {
-            // The overlap check and the save run in one transaction. SQLite lets only one transaction
-            // write at a time, so two requests for the same room and time can't both get it.
+            // Overlap check and save in one transaction. SQLite only allows one writing transaction
+            // at a time, so two requests for the same room and time can't both get through.
             await using var transaction = await _context.Database.BeginTransactionAsync();
             if (await IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, 0))
             {
@@ -69,12 +69,11 @@ public class BookingRepository : IBookingRepository
         }
     }
 
-    // Returns false if the new time was booked by someone else at the same moment, or if saving fails.
     public async Task<bool> Update(Booking booking)
     {
         try
         {
-            // Same as in Create: check and save in one transaction.
+            // Same transaction as in Create
             await using var transaction = await _context.Database.BeginTransactionAsync();
             if (await IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id))
             {
@@ -119,7 +118,7 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
-            // Two bookings overlap if one starts before the other ends. excludeBookingId lets Update skip itself.
+            // Overlap if one starts before the other ends. excludeBookingId is for Update.
             return await _context.Bookings.AnyAsync(b =>
                 b.Id != excludeBookingId &&
                 b.RoomId == roomId &&
@@ -146,12 +145,12 @@ public class BookingRepository : IBookingRepository
         }
     }
 
-    // The most people in one booking in this room that has not ended yet. Returns -1 if the check fails.
+    // Most people in one booking in this room that has not ended. -1 if the check fails.
     public async Task<int> MostSeatsTaken(int roomId)
     {
         try
         {
-            // AsNoTracking, because we only read here and the room is updated right after.
+            // Only reading, the room is updated right after
             var seats = await _context.Bookings
                 .AsNoTracking()
                 .Where(b => b.RoomId == roomId && b.EndTime > DateTime.Now)
@@ -166,12 +165,11 @@ public class BookingRepository : IBookingRepository
         }
     }
 
-    // Returns false if the booking became full at the same moment, or if saving fails.
     public async Task<bool> AddParticipant(int bookingId, string userName)
     {
         try
         {
-            // The seat check and the save run in one transaction, so two students can't both take the last seat.
+            // One transaction, so two students can't both take the last seat.
             await using var transaction = await _context.Database.BeginTransactionAsync();
             var capacity = await _context.Bookings
                 .Where(b => b.Id == bookingId)

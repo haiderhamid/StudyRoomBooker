@@ -14,7 +14,7 @@ public class AccountController : Controller
         _logger = logger;
     }
 
-    // The email can come from the login page, so the user doesn't have to type it again.
+    // Email is filled in when the user comes from the login page.
     [HttpGet]
     public IActionResult Register(string? email = null)
     {
@@ -59,7 +59,7 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            // Tells the user when no account uses this email, so they know they have to register.
+            // Show a link to register if the email doesn't exist.
             if (await _userManager.FindByEmailAsync(model.Email) == null)
             {
                 _logger.LogWarning("[AccountController] Login attempt for unknown email {Email}.", model.Email);
@@ -73,7 +73,7 @@ public class AccountController : Controller
             {
                 _logger.LogInformation("[AccountController] User logged in.");
 
-                // Only go back to pages in our own app, so the login can't send users to another website.
+                // Only local URLs, so login can't redirect to another site.
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 {
                     return Redirect(model.ReturnUrl);

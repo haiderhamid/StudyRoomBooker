@@ -9,14 +9,13 @@ builder.Services.AddSerilog(config => config
 .WriteTo.Console()
 .WriteTo.File($"Logs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log"));
 
-// Add services to the container.
-// An empty value for a number or date field gave "The value '' is invalid.", so it gets a clearer message.
+// Nicer message than "The value '' is invalid." for empty fields
 builder.Services.AddControllersWithViews(options =>
     options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor(_ => "Please fill in this field."));
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Login with roles (admin and student)
+// Login with roles (Admin and Student)
 builder.Services.AddDefaultIdentity<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
@@ -30,7 +29,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
-    // Where users go if they don't have access. 
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
@@ -40,10 +38,10 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Creates the database from the migrations if it does not exist yet
+    // Creates the database from the migrations on startup
     context.Database.Migrate();
 
-    // Only add test data if the database is empty. 
+    // Test data, only if the database is empty
     if (!context.Buildings.Any())
     {
         var p35 = new Building { Name = "Pilestredet 35", Address = "Pilestredet 35, Oslo" };
@@ -132,7 +130,7 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 
-    // Adds the roles and the two test users if they don't exist. 
+    // Roles and the two test users, if they don't exist
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var roleName in new[] { "Admin", "Student" })
     {
@@ -158,14 +156,13 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// Shows our own page for errors like 404
+// Our own error page for 404 etc.
 app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
 
 app.UseHttpsRedirection();

@@ -21,7 +21,7 @@ public class RoomController : Controller
         _logger = logger;
     }
 
-    // Equipment is filtered here because the user can pick more than one. 
+    // Equipment is filtered here and not in the repository, since you can pick several.
     [HttpGet]
     public async Task<IActionResult> Index(int? buildingId, int? minCapacity, List<int>? facilityIds)
     {
@@ -60,7 +60,6 @@ public class RoomController : Controller
     }
 
     [HttpGet]
-    // Room page with a calendar for one week. 
     public async Task<IActionResult> Details(int id, DateTime? week)
     {
         var room = await _roomRepository.GetRoomById(id);
@@ -79,13 +78,13 @@ public class RoomController : Controller
     }
 
     [HttpGet]
-    // Returns just the calendar. site.js uses this to update it on the booking form. 
+    // site.js uses this to reload the calendar under the booking form.
     public async Task<IActionResult> Schedule(int id, DateTime? week, DateTime? date, string? from, string? to, int? excludeBookingId)
     {
         var weekStart = WeekStartOrThisWeek(week ?? date);
         var schedule = await BuildSchedule(id, weekStart, excludeBookingId);
 
-        // Times must be within one day, otherwise adding them to the date could overflow.
+        // Times must be within one day, otherwise adding them to the date can overflow.
         if (date.HasValue && IsSafeDate(date.Value) &&
             TimeSpan.TryParse(from, CultureInfo.InvariantCulture, out var fromTime) &&
             TimeSpan.TryParse(to, CultureInfo.InvariantCulture, out var toTime) &&
@@ -99,7 +98,7 @@ public class RoomController : Controller
         return PartialView("_WeekSchedule", schedule);
     }
 
-    // Gets one week of bookings for a room. When editing the booking being edited is left out. 
+    // excludeBookingId leaves out the booking being edited
     private async Task<WeekScheduleViewModel> BuildSchedule(int roomId, DateTime weekStart, int? excludeBookingId)
     {
         var bookings = await _bookingRepository.GetAll();
@@ -121,19 +120,19 @@ public class RoomController : Controller
         };
     }
 
-    // Dates in the first or last year can't be shown, because the calendar adds and subtracts days.
+    // Year 1 and 9999 overflow when the calendar adds or subtracts days.
     private static bool IsSafeDate(DateTime date)
     {
         return date.Year > DateTime.MinValue.Year && date.Year < DateTime.MaxValue.Year;
     }
 
-    // The Monday of the chosen week. A missing or unusable date gives the current week.
+    // Missing or unusable date -> this week
     private static DateTime WeekStartOrThisWeek(DateTime? date)
     {
         return StartOfWeek(date.HasValue && IsSafeDate(date.Value) ? date.Value : DateTime.Today);
     }
 
-    // Gets the Monday of the week.
+    // Monday is the first day of the week
     private static DateTime StartOfWeek(DateTime date)
     {
         var daysSinceMonday = ((int)date.DayOfWeek + 6) % 7;
@@ -153,7 +152,7 @@ public class RoomController : Controller
         viewModel.AllFacilities = facilities.ToList();
     }
 
-    // The building and the equipment must exist, otherwise the database refuses the room.
+    // Building and equipment must exist, otherwise the database refuses the room.
     private async Task ValidateReferences(Room room, List<int> facilityIds)
     {
         if (room.BuildingId > 0 && await _buildingRepository.GetBuildingById(room.BuildingId) == null)
@@ -186,7 +185,7 @@ public class RoomController : Controller
 
         if (ModelState.IsValid)
         {
-            // Distinct, so the same equipment sent twice is only saved once.
+            // Same id twice should only be saved once
             room.RoomFacilities = viewModel.SelectedFacilityIds
                 .Distinct()
                 .Select(facilityId => new RoomFacility { FacilityId = facilityId })
@@ -237,7 +236,7 @@ public class RoomController : Controller
             return NotFound();
         }
 
-        // The room can't get fewer seats than the people already in one of its bookings.
+        // Can't have fewer seats than people in one of its bookings
         var seatsTaken = await _bookingRepository.MostSeatsTaken(id);
         if (seatsTaken < 0)
         {
@@ -252,7 +251,6 @@ public class RoomController : Controller
 
         if (ModelState.IsValid)
         {
-            // Distinct, so the same equipment sent twice is only saved once.
             room.RoomFacilities = viewModel.SelectedFacilityIds
                 .Distinct()
                 .Select(facilityId => new RoomFacility { RoomId = room.Id, FacilityId = facilityId })

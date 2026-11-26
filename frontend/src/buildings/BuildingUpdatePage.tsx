@@ -4,7 +4,6 @@ import { Spinner, Alert } from 'react-bootstrap';
 import BuildingForm from './BuildingForm';
 import type { Building } from '../types/building';
 import * as BuildingService from './BuildingService';
-import { isValidId } from '../shared/apiHelpers';
 
 export default function BuildingUpdatePage() {
   const { buildingId } = useParams<{ buildingId: string }>();
@@ -14,8 +13,7 @@ export default function BuildingUpdatePage() {
   const { data: building, isLoading, error } = useQuery<Building, Error>({
     queryKey: ['building', buildingId],
     queryFn: () => BuildingService.fetchBuildingById(buildingId!),
-    // A non-numeric id is never fetched, so the page shows "not found" straight away.
-    enabled: isValidId(buildingId),
+    enabled: Number.isInteger(Number(buildingId)),
   });
 
   const mutation = useMutation<Building, Error, Building>({

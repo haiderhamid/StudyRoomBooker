@@ -21,7 +21,7 @@ public class RoomAPIController : ControllerBase
         _logger = logger;
     }
 
-    // The building and the equipment must exist. A wrong id gives 400 here, instead of a database error and 500 when saving.
+    // Wrong building or facility id -> 400 here instead of a database error (500) when saving.
     private async Task ValidateReferences(RoomDto roomDto)
     {
         if (roomDto.BuildingId > 0 && await _buildingRepository.GetBuildingById(roomDto.BuildingId) == null)
@@ -35,7 +35,6 @@ public class RoomAPIController : ControllerBase
         }
     }
 
-    // Turns a Room into a RoomDto, so the API only sends what React needs.
     private static RoomDto ToDto(Room room)
     {
         return new RoomDto
@@ -96,8 +95,7 @@ public class RoomAPIController : ControllerBase
             RoomNumber = roomDto.RoomNumber,
             Capacity = roomDto.Capacity,
             BuildingId = roomDto.BuildingId,
-            // Links the room to the chosen equipment (the many-to-many table).
-            // Distinct, so the same equipment sent twice is only saved once.
+            // Many-to-many table. Distinct, so the same facility is only saved once.
             RoomFacilities = roomDto.FacilityIds
                 .Distinct()
                 .Select(facilityId => new RoomFacility { FacilityId = facilityId })
@@ -124,7 +122,6 @@ public class RoomAPIController : ControllerBase
             return BadRequest("Room data cannot be null");
         }
 
-        // Return 404 if the room doesn't exist.
         if (await _roomRepository.GetRoomById(id) == null)
         {
             _logger.LogWarning("[RoomAPIController] Room with Id {Id} not found for update.", id);
@@ -137,7 +134,7 @@ public class RoomAPIController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        // The room can't get fewer seats than the people already in one of its bookings.
+        // Can't have fewer seats than people in one of its bookings
         var seatsTaken = await _bookingRepository.MostSeatsTaken(id);
         if (seatsTaken < 0)
         {
@@ -155,7 +152,6 @@ public class RoomAPIController : ControllerBase
             RoomNumber = roomDto.RoomNumber,
             Capacity = roomDto.Capacity,
             BuildingId = roomDto.BuildingId,
-            // Distinct, so the same equipment sent twice is only saved once.
             RoomFacilities = roomDto.FacilityIds
                 .Distinct()
                 .Select(facilityId => new RoomFacility { RoomId = id, FacilityId = facilityId })

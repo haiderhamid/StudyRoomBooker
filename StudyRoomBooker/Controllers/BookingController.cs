@@ -251,19 +251,15 @@ public class BookingController : Controller
     [HttpGet]
     public async Task<IActionResult> Create(int? roomId = null, DateTime? date = null, string? from = null, string? to = null)
     {
-        var now = DateTime.Now;
-        var start = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0).AddMinutes((now.Minute / 15 + 1) * 15);
-        if (start.Hour < HomeViewModel.DayStartHour || start.Hour >= HomeViewModel.DayEndHour - 1)
-        {
-            var firstDay = start.Hour >= HomeViewModel.DayEndHour - 1 ? start.Date.AddDays(1) : start.Date;
-            start = firstDay.AddHours(9);
-        }
+        var start = HomeViewModel.FirstBookableStart(DateTime.Now);
+        var end = start.AddHours(1);
+        var closes = start.Date.AddHours(HomeViewModel.DayEndHour);
 
         var viewModel = new BookingViewModel
         {
             Date = start.Date,
             FromTime = start.TimeOfDay,
-            ToTime = start.AddHours(1).TimeOfDay,
+            ToTime = (end < closes ? end : closes).TimeOfDay,
             RoomSelectList = await GetRoomSelectListAsync(),
             TimeSelectList = GetTimeSelectList()
         };
@@ -273,10 +269,13 @@ public class BookingController : Controller
             viewModel.Booking.RoomId = roomId.Value;
         }
 
-        if (date.HasValue && date.Value.Date >= DateTime.Today)
+        // A day with no times left (past, or today after 19:45) is moved to the first day that has them.
+        if (date.HasValue && date.Value.Date >= start.Date)
         {
             viewModel.Date = date.Value.Date;
         }
+        // Otherwise the form shows the date from the URL instead of the one picked here
+        ModelState.Remove(nameof(date));
 
         if (TimeSpan.TryParse(from, CultureInfo.InvariantCulture, out var fromTime) &&
             TimeSpan.TryParse(to, CultureInfo.InvariantCulture, out var toTime) &&

@@ -63,4 +63,19 @@ public class HomeControllerTests
         Assert.Single(model.Rooms);
         Assert.Equal("102", model.Rooms[0].Room.RoomNumber);
     }
+
+    [Fact]
+    public void FirstBookableStart_GivesNextQuarterWithinOpeningHours()
+    {
+        var day = new DateTime(2026, 11, 25);
+
+        Assert.Equal(day.AddHours(7), HomeViewModel.FirstBookableStart(day.AddHours(6.5)));
+        Assert.Equal(day.AddHours(10.75), HomeViewModel.FirstBookableStart(day.AddHours(10).AddMinutes(35)));
+        Assert.Equal(day.AddHours(19), HomeViewModel.FirstBookableStart(day.AddHours(18.75)));
+        Assert.Equal(day.AddHours(19.75), HomeViewModel.FirstBookableStart(day.AddHours(19).AddMinutes(44)));
+        // From 19:45 nothing can be booked today
+        Assert.Equal(day.AddDays(1).AddHours(7), HomeViewModel.FirstBookableStart(day.AddHours(19.75)));
+        Assert.Equal(day.AddDays(1).AddHours(7), HomeViewModel.FirstBookableStart(day.AddHours(20.5)));
+        Assert.Equal(day.AddDays(1).AddHours(7), HomeViewModel.FirstBookableStart(day.AddHours(23).AddMinutes(50)));
+    }
 }

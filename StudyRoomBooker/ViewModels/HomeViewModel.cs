@@ -7,6 +7,8 @@ public class HomeViewModel
     public const int DayEndHour = 20;
 
     public DateTime Date { get; set; } = DateTime.Today;
+    // First day that still has times to book. Tomorrow after 19:45.
+    public DateTime FirstDay { get; set; } = DateTime.Today;
     public string? FromTime { get; set; }
     public string? ToTime { get; set; }
     public int? BuildingId { get; set; }
@@ -23,9 +25,29 @@ public class HomeViewModel
 
     public bool HasTime => FromTime != null && ToTime != null && !TimeIsInvalid;
 
+    public bool ClosedToday => FirstDay > DateTime.Today;
+
     public bool IsFiltered =>
-        Date != DateTime.Today || FromTime != null || ToTime != null ||
+        Date != FirstDay || FromTime != null || ToTime != null ||
         BuildingId != null || MinCapacity != null || FacilityIds.Any();
+
+    // The next whole quarter hour after now. Before 07:00 it is 07:00, and after the
+    // last start (19:45) it is 07:00 the next day.
+    public static DateTime FirstBookableStart(DateTime now)
+    {
+        var start = now.Date.AddMinutes((Math.Floor(now.TimeOfDay.TotalMinutes / 15) + 1) * 15);
+        var opens = start.Date.AddHours(DayStartHour);
+        var lastStart = start.Date.AddHours(DayEndHour).AddMinutes(-15);
+        if (start < opens)
+        {
+            return opens;
+        }
+        if (start > lastStart)
+        {
+            return opens.AddDays(1);
+        }
+        return start;
+    }
 
     // Position on the 07-20 timeline in percent
     public static double PercentOfDay(TimeSpan time)

@@ -30,11 +30,13 @@ public class HomeController : Controller
     {
         var timeOptions = GetTimeOptions();
         var selectedFacilityIds = facilityIds ?? new List<int>();
+        var firstDay = HomeViewModel.FirstBookableStart(DateTime.Now).Date;
 
         var viewModel = new HomeViewModel
         {
-            // Past or missing date -> today
-            Date = date.HasValue && date.Value.Date >= DateTime.Today ? date.Value.Date : DateTime.Today,
+            // Missing date, or a day with no times left -> first day that has them
+            Date = date.HasValue && date.Value.Date >= firstDay ? date.Value.Date : firstDay,
+            FirstDay = firstDay,
             FromTime = from != null && timeOptions.Contains(from) ? from : null,
             ToTime = to != null && timeOptions.Contains(to) ? to : null,
             BuildingId = buildingId,

@@ -28,7 +28,7 @@
                 </div>
                 <div class="mb-3">
                     <label asp-for="Date" class="form-label required">Date</label>
-                    <input asp-for="Date" class="form-control" />
+                    <input asp-for="Date" class="form-control" min="@HomeViewModel.FirstBookableStart(DateTime.Now).ToString("yyyy-MM-dd")" />
                     <span asp-validation-for="Date" class="text-danger"></span>
                 </div>
                 <div class="row g-3">

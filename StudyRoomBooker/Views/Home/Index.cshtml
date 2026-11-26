@@ -17,7 +17,7 @@
         <div class="col-12 col-md-3">
             <label for="date" class="form-label">Date</label>
             <input type="date" id="date" name="date" class="form-control" value="@dateValue"
-                   min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                   min="@Model.FirstDay.ToString("yyyy-MM-dd")" />
         </div>
         <div class="col-6 col-md-2">
             <label for="from" class="form-label">From</label>
@@ -79,6 +79,11 @@
         </div>
     </div>
 </form>
+
+@if (Model.ClosedToday && Model.Date == Model.FirstDay)
+{
+    <p class="notice" role="status">Rooms are closed for today, so tomorrow is shown.</p>
+}
 
 <div class="results-header">
     <h2>

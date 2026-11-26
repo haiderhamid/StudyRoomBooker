@@ -112,7 +112,7 @@ export default function DatePicker({ id, value, onChange, minDate, isInvalid }: 
               })}
             </div>
             <div className="calendar-footer">
-              <button type="button" className="btn btn-link btn-sm" onClick={() => pick(new Date())}>
+              <button type="button" className="btn btn-link btn-sm" disabled={!!minDate && today < minDate} onClick={() => pick(new Date())}>
                 Today
               </button>
             </div>

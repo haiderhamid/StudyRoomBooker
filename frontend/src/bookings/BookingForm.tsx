@@ -9,7 +9,7 @@ import * as BookingService from './BookingService';
 import { useAuth } from '../auth/useAuth';
 import WeekSchedule from '../rooms/WeekSchedule';
 import * as RoomService from '../rooms/RoomService';
-import { addDays, availableTimes, moveEndTime, startOfWeek, toDateString, todayString } from '../shared/dateTime';
+import { addDays, availableTimes, firstBookableDate, moveEndTime, startOfWeek, toDateString } from '../shared/dateTime';
 import DatePicker from '../shared/DatePicker';
 
 interface BookingFormProps {
@@ -45,7 +45,11 @@ export default function BookingForm({
 }: BookingFormProps) {
   const [roomId, setRoomId] = useState<string>(initialValues ? String(initialValues.roomId) : (defaultRoomId ?? ''));
   const [subject, setSubject] = useState<string>(initialValues?.subject ?? '');
-  const [date, setDate] = useState<string>(initialValues ? initialValues.startTime.substring(0, 10) : (defaultDate || todayString()));
+  // A date with no times left (past, or today after 19:45) moves to the first day that has them
+  const firstDay = firstBookableDate();
+  const [date, setDate] = useState<string>(initialValues
+    ? initialValues.startTime.substring(0, 10)
+    : (defaultDate && defaultDate >= firstDay ? defaultDate : firstDay));
   const [fromTime, setFromTime] = useState<string>(initialValues ? initialValues.startTime.substring(11, 16) : (defaultFromTime ?? ''));
   const [toTime, setToTime] = useState<string>(initialValues ? initialValues.endTime.substring(11, 16) : (defaultToTime ?? ''));
   const [errors, setErrors] = useState<BookingFormErrors>({});
@@ -163,7 +167,7 @@ export default function BookingForm({
                 id="date"
                 value={date}
                 onChange={handleDateChange}
-                minDate={initialValues ? undefined : todayString()}
+                minDate={initialValues ? undefined : firstDay}
                 isInvalid={!!errors.date}
               />
               <Form.Control.Feedback type="invalid">{errors.date}</Form.Control.Feedback>

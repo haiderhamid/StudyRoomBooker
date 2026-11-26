@@ -23,6 +23,16 @@ export function startOfWeek(date: Date): Date {
   return monday;
 }
 
+// Same rule as the MVC app: after 19:45 nothing can be booked today, so the first day is tomorrow.
+export function firstBookableDate(): string {
+  const now = new Date();
+  const lastStart = 19 * 60 + 45;
+  if (now.getHours() * 60 + now.getMinutes() >= lastStart) {
+    return toDateString(addDays(now, 1));
+  }
+  return todayString();
+}
+
 export function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);

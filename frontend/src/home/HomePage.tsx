@@ -10,13 +10,13 @@ import * as RoomService from '../rooms/RoomService';
 import * as BuildingService from '../buildings/BuildingService';
 import * as BookingService from '../bookings/BookingService';
 import * as FacilityService from '../facilities/FacilityService';
-import { availableTimes, moveEndTime, todayString } from '../shared/dateTime';
+import { availableTimes, firstBookableDate, moveEndTime, todayString } from '../shared/dateTime';
 import DatePicker from '../shared/DatePicker';
 import RoomTags from '../shared/RoomTags';
 import AvailabilityBar from './AvailabilityBar';
 
 export default function HomePage() {
-  const [date, setDate] = useState<string>(todayString());
+  const [date, setDate] = useState<string>(firstBookableDate);
   const [fromTime, setFromTime] = useState<string>('');
   const [toTime, setToTime] = useState<string>('');
   const [buildingId, setBuildingId] = useState<string>('');
@@ -47,7 +47,8 @@ export default function HomePage() {
   const hasTime = fromTime !== '' && toTime !== '' && !timeIsInvalid;
   const bookingsOnDate = bookings.filter(b => b.startTime.substring(0, 10) === date);
   const isToday = date === todayString();
-  const isFiltered = date !== todayString() || fromTime !== '' || toTime !== '' ||
+  const firstDay = firstBookableDate();
+  const isFiltered = date !== firstDay || fromTime !== '' || toTime !== '' ||
     buildingId !== '' || minCapacity !== '' || facilityIds.length > 0;
 
   const matchingRooms = rooms.filter(room =>
@@ -87,7 +88,7 @@ export default function HomePage() {
   };
 
   const resetFilters = () => {
-    setDate(todayString());
+    setDate(firstBookableDate());
     setFromTime('');
     setToTime('');
     setBuildingId('');
@@ -116,7 +117,7 @@ export default function HomePage() {
           <Col xs={12} md={3}>
             <Form.Group controlId="searchDate">
               <Form.Label>Date</Form.Label>
-              <DatePicker id="searchDate" value={date} onChange={setDate} minDate={todayString()} />
+              <DatePicker id="searchDate" value={date} onChange={setDate} minDate={firstDay} />
             </Form.Group>
           </Col>
           <Col xs={6} md={2}>
@@ -192,6 +193,10 @@ export default function HomePage() {
           )}
         </div>
       </Form>
+
+      {firstDay !== todayString() && date === firstDay && (
+        <p className="notice" role="status">Rooms are closed for today, so tomorrow is shown.</p>
+      )}
 
       <div className="results-header">
         <h2>

@@ -246,7 +246,7 @@ public class BookingController : Controller
         return time.Minute % 15 == 0 && time.Second == 0;
     }
 
-    // Default is the next quarter hour. From 19:00 it starts at 09:00 the next day.
+    // Default is the next quarter hour. After 19:45 it starts at 07:00 the next day.
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Create(int? roomId = null, DateTime? date = null, string? from = null, string? to = null)

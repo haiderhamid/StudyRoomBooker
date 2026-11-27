@@ -268,7 +268,6 @@ a.item-title:hover {
   --bs-btn-disabled-border-color: var(--srb-text);
 }
 
-.btn-outline-primary,
 .btn-outline-secondary {
   --bs-btn-color: var(--srb-text);
   --bs-btn-border-color: var(--srb-line);
@@ -278,13 +277,6 @@ a.item-title:hover {
   --bs-btn-active-color: var(--srb-text);
   --bs-btn-active-bg: var(--srb-track);
   --bs-btn-active-border-color: var(--srb-line);
-}
-
-.btn-outline-danger {
-  --bs-btn-color: var(--srb-busy);
-  --bs-btn-border-color: var(--srb-line);
-  --bs-btn-hover-bg: var(--srb-busy);
-  --bs-btn-hover-border-color: var(--srb-busy);
 }
 
 .btn-link {
@@ -357,22 +349,8 @@ a.item-title:hover {
   background-color: var(--srb-soft);
 }
 
-.card .card-footer.bg-white {
-  background-color: transparent !important;
-}
-
-.shadow-sm {
-  box-shadow: none !important;
-}
-
 .alert {
   border-radius: 12px;
-}
-
-.table {
-  --bs-table-bg: transparent;
-  --bs-table-striped-bg: var(--srb-soft);
-  --bs-table-hover-bg: var(--srb-track);
 }
 
 .hero {

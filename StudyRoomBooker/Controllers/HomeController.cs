@@ -56,6 +56,8 @@ public class HomeController : Controller
         if (bookings == null)
         {
             _logger.LogError("[HomeController] Booking list not found while executing GetAll().");
+            // Without bookings every room would look free, so the view shows a message instead.
+            viewModel.AvailabilityUnavailable = true;
             bookings = new List<Booking>();
         }
 
@@ -110,7 +112,7 @@ public class HomeController : Controller
         return View(viewModel);
     }
 
-    // Used to check that from/to in the URL are real times
+    // Times for the dropdowns, also used to check that from/to in the URL are real times
     private static List<string> GetTimeOptions()
     {
         var times = new List<string>();

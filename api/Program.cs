@@ -71,7 +71,7 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IFacilityRepository, FacilityRepository>();
 
-// Only the React app may call the API
+// Browsers only let the React app call the API (CORS)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>

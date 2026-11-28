@@ -127,4 +127,24 @@ public class RoomRepository : IRoomRepository
             return null;
         }
     }
+
+    // True if the building already has a room with this number. Null if the check fails.
+    // excludeRoomId leaves out the room being edited.
+    public async Task<bool?> RoomNumberExists(int buildingId, string roomNumber, int? excludeRoomId)
+    {
+        try
+        {
+            // Compared here and not in SQL, since SQLite only ignores case for a-z.
+            var roomNumbers = await _context.Rooms
+                .Where(r => r.BuildingId == buildingId && (excludeRoomId == null || r.Id != excludeRoomId))
+                .Select(r => r.RoomNumber)
+                .ToListAsync();
+            return roomNumbers.Any(n => string.Equals(n.Trim(), roomNumber.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[RoomRepository] RoomNumberExists() failed for BuildingId {BuildingId}.", buildingId);
+            return null;
+        }
+    }
 }

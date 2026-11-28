@@ -20,7 +20,6 @@ public class Building
         get
         {
             var shortName = "";
-            // Name can be null while an empty form is validated
             foreach (var word in (Name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries))
             {
                 shortName += char.IsDigit(word[0]) ? word : char.ToUpper(word[0]).ToString();

@@ -1,7 +1,6 @@
 import type { Booking } from '../types/booking';
 import { DAY_END_HOUR, DAY_START_HOUR, HOUR_MARKS } from '../shared/dateTime';
 
-// In minutes, since the bar works with minutes
 const DAY_START = DAY_START_HOUR * 60;
 const DAY_END = DAY_END_HOUR * 60;
 const DAY_LENGTH = DAY_END - DAY_START;

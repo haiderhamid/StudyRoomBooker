@@ -322,7 +322,8 @@ namespace StudyRoomBooker.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BuildingId");
+                    b.HasIndex("BuildingId", "RoomNumber")
+                        .IsUnique();
 
                     b.ToTable("Rooms");
                 });

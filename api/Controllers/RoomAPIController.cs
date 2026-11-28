@@ -35,6 +35,27 @@ public class RoomAPIController : ControllerBase
         }
     }
 
+    // Same number in the same building -> 400 here instead of a database error (500) when saving.
+    // excludeRoomId is the room being updated. False if the check itself failed.
+    private async Task<bool> ValidateUniqueRoomNumber(RoomDto roomDto, int? excludeRoomId)
+    {
+        if (string.IsNullOrWhiteSpace(roomDto.RoomNumber) || roomDto.BuildingId <= 0)
+        {
+            return true;
+        }
+
+        var exists = await _roomRepository.RoomNumberExists(roomDto.BuildingId, roomDto.RoomNumber, excludeRoomId);
+        if (exists == null)
+        {
+            return false;
+        }
+        if (exists.Value)
+        {
+            ModelState.AddModelError("RoomNumber", "This building already has a room with this number.");
+        }
+        return true;
+    }
+
     private static RoomDto ToDto(Room room)
     {
         return new RoomDto
@@ -85,6 +106,10 @@ public class RoomAPIController : ControllerBase
         }
 
         await ValidateReferences(roomDto);
+        if (!await ValidateUniqueRoomNumber(roomDto, null))
+        {
+            return StatusCode(500, "Could not check the room number.");
+        }
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);
@@ -129,6 +154,10 @@ public class RoomAPIController : ControllerBase
         }
 
         await ValidateReferences(roomDto);
+        if (!await ValidateUniqueRoomNumber(roomDto, id))
+        {
+            return StatusCode(500, "Could not check the room number.");
+        }
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);

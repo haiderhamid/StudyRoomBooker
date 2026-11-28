@@ -266,7 +266,7 @@ public class BookingAPIController : ControllerBase
             return Ok(ToDto(booking));
         }
 
-        // Same as in Create
+        // Taken by someone else at the same moment -> 409
         if (await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, id))
         {
             return Conflict("This room was just booked by someone else. Please choose another time.");

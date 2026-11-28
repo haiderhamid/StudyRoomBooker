@@ -115,6 +115,11 @@
     </div>
 </div>
 
+@if (Model.AvailabilityUnavailable)
+{
+    <div class="alert alert-warning" role="alert">Availability could not be loaded right now. Please try again later.</div>
+}
+
 @if (!Model.Rooms.Any())
 {
     <p class="empty-state">No rooms match your search. Try fewer filters.</p>
@@ -153,53 +158,60 @@
                 </div>
             </div>
 
-            @* Bookings are placed on the timeline with left and width in percent *@
+            @* Bookings are placed on the timeline with left and width in percent.
+               Left empty when the bookings could not be read, so no room looks free. *@
             <div class="availability">
-                <div class="availability-track">
-                    @if (isToday)
-                    {
-                        <span class="availability-past" style="width: @HomeViewModel.PercentOfDay(DateTime.Now.TimeOfDay)%"></span>
-                    }
-                    @foreach (var booking in item.Bookings)
-                    {
-                        var start = booking.StartTime.TimeOfDay;
-                        var end = booking.EndTime.TimeOfDay;
-                        <span class="availability-booked"
-                              style="left: @HomeViewModel.PercentOfDay(start)%; width: @HomeViewModel.WidthOfSpan(start, end)%"
-                              title="Booked @booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")"></span>
-                    }
-                    @if (Model.HasTime)
-                    {
-                        var selectedStart = TimeSpan.Parse(Model.FromTime!, culture);
-                        var selectedEnd = TimeSpan.Parse(Model.ToTime!, culture);
-                        <span class="availability-selected"
-                              style="left: @HomeViewModel.PercentOfDay(selectedStart)%; width: @HomeViewModel.WidthOfSpan(selectedStart, selectedEnd)%"></span>
-                    }
-                </div>
-                <div class="availability-scale" aria-hidden="true">
-                    @foreach (var hour in hourMarks)
-                    {
-                        <span style="left: @HomeViewModel.PercentOfDay(TimeSpan.FromHours(hour))%">@hour.ToString("00")</span>
-                    }
-                </div>
-                <p class="visually-hidden">@description</p>
+                @if (!Model.AvailabilityUnavailable)
+                {
+                    <div class="availability-track">
+                        @if (isToday)
+                        {
+                            <span class="availability-past" style="width: @HomeViewModel.PercentOfDay(DateTime.Now.TimeOfDay)%"></span>
+                        }
+                        @foreach (var booking in item.Bookings)
+                        {
+                            var start = booking.StartTime.TimeOfDay;
+                            var end = booking.EndTime.TimeOfDay;
+                            <span class="availability-booked"
+                                  style="left: @HomeViewModel.PercentOfDay(start)%; width: @HomeViewModel.WidthOfSpan(start, end)%"
+                                  title="Booked @booking.StartTime.ToString("HH:mm")–@booking.EndTime.ToString("HH:mm")"></span>
+                        }
+                        @if (Model.HasTime)
+                        {
+                            var selectedStart = TimeSpan.Parse(Model.FromTime!, culture);
+                            var selectedEnd = TimeSpan.Parse(Model.ToTime!, culture);
+                            <span class="availability-selected"
+                                  style="left: @HomeViewModel.PercentOfDay(selectedStart)%; width: @HomeViewModel.WidthOfSpan(selectedStart, selectedEnd)%"></span>
+                        }
+                    </div>
+                    <div class="availability-scale" aria-hidden="true">
+                        @foreach (var hour in hourMarks)
+                        {
+                            <span style="left: @HomeViewModel.PercentOfDay(TimeSpan.FromHours(hour))%">@hour.ToString("00")</span>
+                        }
+                    </div>
+                    <p class="visually-hidden">@description</p>
+                }
             </div>
 
             <span class="status-cell">
-                @if (Model.HasTime)
+                @if (!Model.AvailabilityUnavailable)
                 {
-                    if (item.IsFree)
+                    if (Model.HasTime)
                     {
-                        <span class="status status-free">Available</span>
+                        if (item.IsFree)
+                        {
+                            <span class="status status-free">Available</span>
+                        }
+                        else
+                        {
+                            <span class="status status-busy">Booked</span>
+                        }
                     }
                     else
                     {
-                        <span class="status status-busy">Booked</span>
+                        <span class="status-summary">@summary</span>
                     }
-                }
-                else
-                {
-                    <span class="status-summary">@summary</span>
                 }
             </span>
 

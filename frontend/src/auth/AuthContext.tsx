@@ -38,6 +38,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (credentials: LoginDto) => {
     const receivedToken = await AuthService.login(credentials);
+    // localStorage so you stay logged in after a reload. The token is sent in a header,
+    // not as a cookie, so CSRF is not a problem.
     localStorage.setItem('token', receivedToken);
     setUser(jwtDecode<User>(receivedToken));
     setToken(receivedToken);

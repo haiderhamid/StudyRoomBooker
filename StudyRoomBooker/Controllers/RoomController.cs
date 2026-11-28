@@ -166,6 +166,26 @@ public class RoomController : Controller
         }
     }
 
+    // Same number in the same building -> validation message instead of a database error.
+    // excludeRoomId is the room being edited, so it doesn't count as a duplicate of itself.
+    private async Task ValidateUniqueRoomNumber(Room room, int? excludeRoomId)
+    {
+        if (string.IsNullOrWhiteSpace(room.RoomNumber) || room.BuildingId <= 0)
+        {
+            return;
+        }
+
+        var exists = await _roomRepository.RoomNumberExists(room.BuildingId, room.RoomNumber, excludeRoomId);
+        if (exists == null)
+        {
+            ModelState.AddModelError("", "Could not check the room number. Please try again.");
+        }
+        else if (exists.Value)
+        {
+            ModelState.AddModelError("Room.RoomNumber", "This building already has a room with this number.");
+        }
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> Create()
@@ -182,6 +202,7 @@ public class RoomController : Controller
     {
         var room = viewModel.Room;
         await ValidateReferences(room, viewModel.SelectedFacilityIds);
+        await ValidateUniqueRoomNumber(room, null);
 
         if (ModelState.IsValid)
         {
@@ -248,6 +269,7 @@ public class RoomController : Controller
         }
 
         await ValidateReferences(room, viewModel.SelectedFacilityIds);
+        await ValidateUniqueRoomNumber(room, id);
 
         if (ModelState.IsValid)
         {

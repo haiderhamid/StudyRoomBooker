@@ -150,7 +150,7 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
-            // Only reading, and the room is updated right after
+            // Only the seat counts are read and nothing is tracked, since the room is updated right after
             var seats = await _context.Bookings
                 .AsNoTracking()
                 .Where(b => b.RoomId == roomId && b.EndTime > DateTime.Now)
@@ -169,7 +169,7 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
-            // Same idea here: two students can't both take the last seat.
+            // One transaction, so two students can't both take the last seat.
             await using var transaction = await _context.Database.BeginTransactionAsync();
             var capacity = await _context.Bookings
                 .Where(b => b.Id == bookingId)

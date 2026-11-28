@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
+// The unique index stops two rooms in the same building from having the same number.
+[Index(nameof(BuildingId), nameof(RoomNumber), IsUnique = true)]
 public class Room
 {
     public int Id { get; set; }

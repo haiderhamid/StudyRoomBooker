@@ -6,4 +6,5 @@ public interface IRoomRepository
     Task<bool> Update(Room room);
     Task<bool> Delete(int id);
     Task<IEnumerable<Room>?> Search(int? buildingId, int? minCapacity);
+    Task<bool?> RoomNumberExists(int buildingId, string roomNumber, int? excludeRoomId);
 }

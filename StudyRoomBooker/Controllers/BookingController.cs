@@ -290,6 +290,7 @@ public class BookingController : Controller
 
     [Authorize]
     [HttpPost]
+    // CSRF: the form must send the token from our own page
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BookingViewModel viewModel)
     {
@@ -303,7 +304,7 @@ public class BookingController : Controller
             // From the logged in user, never from the form
             BookedBy = User.Identity?.Name ?? string.Empty
         };
-        // BookedBy isn't in the form
+        // BookedBy isn't in the form, so don't validate it
         ModelState.Remove("Booking.BookedBy");
 
         var timesAreRead = IsRead("Date") && IsRead("FromTime") && IsRead("ToTime");
@@ -445,7 +446,7 @@ public class BookingController : Controller
                 TempData["Message"] = "Your changes have been saved.";
                 return RedirectToAction("Index");
             }
-            // Same as in Create
+            // Can also fail if someone booked the same time just now.
             ModelState.AddModelError("", await _bookingRepository.IsRoomBooked(booking.RoomId, booking.StartTime, booking.EndTime, booking.Id)
                 ? "This room was just booked by someone else. Please choose another time."
                 : "An unexpected error occurred while updating the booking. Please try again.");

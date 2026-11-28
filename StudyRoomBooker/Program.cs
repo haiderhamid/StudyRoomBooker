@@ -38,7 +38,6 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Creates the database from the migrations on startup
     context.Database.Migrate();
 
     // Test data, only if the database is empty

@@ -150,7 +150,7 @@ public class BookingRepository : IBookingRepository
     {
         try
         {
-            // Only reading, the room is updated right after
+            // Only the seat counts are read and nothing is tracked, since the room is updated right after
             var seats = await _context.Bookings
                 .AsNoTracking()
                 .Where(b => b.RoomId == roomId && b.EndTime > DateTime.Now)

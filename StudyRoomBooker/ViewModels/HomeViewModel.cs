@@ -20,6 +20,9 @@ public class HomeViewModel
     public List<Facility> Facilities { get; set; } = new List<Facility>();
     public List<string> TimeOptions { get; set; } = new List<string>();
 
+    // True when the bookings could not be read, so we don't know which rooms are free
+    public bool AvailabilityUnavailable { get; set; }
+
     public bool TimeIsInvalid =>
         FromTime != null && ToTime != null && string.CompareOrdinal(ToTime, FromTime) <= 0;
 

@@ -27,9 +27,8 @@ public class RoomControllerIntegrationTests : IDisposable
         context.RoomFacilities.Add(new RoomFacility { Room = room, Facility = whiteboard });
         // A second room in the same building, so the building has several rooms like in the real data.
         context.Rooms.Add(new Room { RoomNumber = "102", Capacity = 6, Building = building });
-        // A booking in room 101 that has not ended, with 2 people. Edit checks the seats with
-        // MostSeatsTaken(), and if that ever loads the bookings together with the room, the room
-        // is tracked and saving the edited room fails. Without a booking that would not show up.
+        // A booking in room 101 that has not ended, with 2 people. If MostSeatsTaken() ever loads the
+        // room with the bookings, the room gets tracked and saving the edited room in Edit fails.
         var tomorrow = DateTime.Today.AddDays(1);
         context.Bookings.Add(new Booking
         {
